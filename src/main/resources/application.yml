@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: st-microservice-tasks
+
+server:
+  port: 6785
+  
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: debug
