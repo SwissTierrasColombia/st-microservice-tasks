@@ -3,6 +3,7 @@ package com.ai.st.microservice.tasks.clients;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.ai.st.microservice.tasks.dto.UserDto;
 
@@ -11,5 +12,8 @@ public interface UserFeignClient {
 
 	@GetMapping("/api/administration/users/{id}")
 	public UserDto findById(@PathVariable Long id);
+
+	@GetMapping("/api/administration/users/token")
+	public UserDto findByToken(@RequestParam(name = "token") String token);
 
 }

@@ -10,9 +10,9 @@ import com.ai.st.microservice.tasks.services.ITaskStateService;
 @Component
 public class TaskStateBusiness {
 
-	static final Long TASK_STATE_ASSIGNED = (long) 1;
-	static final Long TASK_STATE_CLOSED = (long) 2;
-	static final Long TASK_STATE_CANCELLED = (long) 3;
+	public static final Long TASK_STATE_ASSIGNED = (long) 1;
+	public static final Long TASK_STATE_CLOSED = (long) 2;
+	public static final Long TASK_STATE_CANCELLED = (long) 3;
 
 	@Autowired
 	private ITaskStateService taskStateService;

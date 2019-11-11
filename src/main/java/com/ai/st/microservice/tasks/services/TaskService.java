@@ -48,4 +48,9 @@ public class TaskService implements ITaskService {
 		return taskRepository.findByUserAndTaskState(user, taskState);
 	}
 
+	@Override
+	public TaskEntity updateTask(TaskEntity task) {
+		return taskRepository.save(task);
+	}
+
 }

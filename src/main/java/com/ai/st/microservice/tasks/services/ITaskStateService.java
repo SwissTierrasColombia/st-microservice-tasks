@@ -6,4 +6,8 @@ public interface ITaskStateService {
 
 	public TaskStateEntity getById(Long id);
 
+	public Long getAllCount();
+
+	public TaskStateEntity createTaskState(TaskStateEntity taskEntity);
+
 }

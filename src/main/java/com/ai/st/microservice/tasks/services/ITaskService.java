@@ -18,4 +18,6 @@ public interface ITaskService {
 
 	public List<TaskEntity> getTasksByUserAndState(UserEntity user, TaskStateEntity taskState);
 
+	public TaskEntity updateTask(TaskEntity task);
+
 }

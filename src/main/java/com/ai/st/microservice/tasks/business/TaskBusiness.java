@@ -65,13 +65,6 @@ public class TaskBusiness {
 			throw new BusinessException("User not found.");
 		}
 
-		// validate if the user who registers the task exists
-		try {
-			userClient.findById(createdBy);
-		} catch (FeignException e) {
-			throw new BusinessException("User not found.");
-		}
-
 		// set task state
 		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_ASSIGNED);
 		if (taskStateDto == null) {
@@ -136,6 +129,46 @@ public class TaskBusiness {
 		}
 
 		return listTasksDto;
+	}
+
+	public TaskDto closeTask(Long taskId, Long userId) throws BusinessException {
+
+		TaskDto taskDto = null;
+
+		// verify task exists
+		TaskEntity taskEntity = taskService.getById(taskId);
+		if (!(taskEntity instanceof TaskEntity)) {
+			throw new BusinessException("Task not found.");
+		}
+
+		// verify that the user who will close the task is the same as the one assigned
+		if (taskEntity.getUser().getId() != userId) {
+			throw new BusinessException("The user is not the owner of the task.");
+		}
+
+		Date currentDate = new Date();
+		taskEntity.setClosingDate(currentDate);
+
+		// set task state
+		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_CLOSED);
+		if (taskStateDto == null) {
+			throw new BusinessException("Task state not found.");
+		}
+		TaskStateEntity taskStateEntity = new TaskStateEntity();
+		taskStateEntity.setId(taskStateDto.getId());
+		taskEntity.setTaskState(taskStateEntity);
+
+		try {
+
+			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
+			taskDto = entityParseDto(taskUpdatedEntity);
+
+		} catch (Exception e) {
+			System.out.println("error " + e.getMessage());
+			throw new BusinessException("The task could not be updated.");
+		}
+
+		return taskDto;
 	}
 
 	public TaskDto entityParseDto(TaskEntity taskEntity) {
