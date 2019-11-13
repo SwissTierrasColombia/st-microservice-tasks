@@ -2,9 +2,7 @@ package com.ai.st.microservice.tasks.services;
 
 import java.util.List;
 
-import com.ai.st.entities.schema.administration.UserEntity;
-import com.ai.st.entities.schema.tasks.TaskEntity;
-import com.ai.st.entities.schema.tasks.TaskStateEntity;
+import com.ai.st.microservice.tasks.entities.TaskEntity;
 
 public interface ITaskService {
 
@@ -14,9 +12,11 @@ public interface ITaskService {
 
 	public TaskEntity getById(Long id);
 
-	public List<TaskEntity> getTasksByUser(UserEntity user);
+	public List<TaskEntity> getTasksByStateAndMember(Long taskStateId, Long memberCode);
 
-	public List<TaskEntity> getTasksByUserAndState(UserEntity user, TaskStateEntity taskState);
+	public List<TaskEntity> getTasksByState(Long taskStateId);
+
+	public List<TaskEntity> getTasksByMember(Long memberCode);
 
 	public TaskEntity updateTask(TaskEntity task);
 

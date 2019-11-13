@@ -7,8 +7,8 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.entities.schema.tasks.TaskStateEntity;
 import com.ai.st.microservice.tasks.business.TaskStateBusiness;
+import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 import com.ai.st.microservice.tasks.services.ITaskStateService;
 
 @Component

@@ -9,7 +9,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients
 @EnableEurekaClient
 @SpringBootApplication
-@EntityScan({"com.ai.st.entities"})
 public class StMicroserviceTasksApplication {
 
 	public static void main(String[] args) {

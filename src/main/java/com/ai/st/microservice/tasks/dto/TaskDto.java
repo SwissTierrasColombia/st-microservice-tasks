@@ -1,7 +1,9 @@
 package com.ai.st.microservice.tasks.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -31,15 +33,12 @@ public class TaskDto implements Serializable {
 
 	@ApiModelProperty(required = true, notes = "Task state")
 	private TaskStateDto taskState;
-	
-	@ApiModelProperty(required = true, notes = "User assigned")
-	private UserDto user;
-	
-	@ApiModelProperty(required = true, notes = "User creation")
-	private UserDto createdBy;
+
+	@ApiModelProperty(required = true, notes = "Members")
+	private List<TaskMemberDto> members;
 
 	public TaskDto() {
-
+		this.members = new ArrayList<TaskMemberDto>();
 	}
 
 	public Long getId() {
@@ -98,20 +97,12 @@ public class TaskDto implements Serializable {
 		this.taskState = taskState;
 	}
 
-	public UserDto getUser() {
-		return user;
+	public List<TaskMemberDto> getMembers() {
+		return members;
 	}
 
-	public void setUser(UserDto user) {
-		this.user = user;
-	}
-
-	public UserDto getCreatedBy() {
-		return createdBy;
-	}
-
-	public void setCreatedBy(UserDto createdBy) {
-		this.createdBy = createdBy;
+	public void setMembers(List<TaskMemberDto> members) {
+		this.members = members;
 	}
 
 }

@@ -7,9 +7,7 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.ai.st.entities.schema.administration.UserEntity;
-import com.ai.st.entities.schema.tasks.TaskEntity;
-import com.ai.st.entities.schema.tasks.TaskStateEntity;
+import com.ai.st.microservice.tasks.entities.TaskEntity;
 import com.ai.st.microservice.tasks.repositories.TaskRepository;
 
 @Service
@@ -38,19 +36,23 @@ public class TaskService implements ITaskService {
 
 	@Override
 	@Transactional
-	public List<TaskEntity> getTasksByUser(UserEntity user) {
-		return taskRepository.findByUser(user);
-	}
-
-	@Override
-	@Transactional
-	public List<TaskEntity> getTasksByUserAndState(UserEntity user, TaskStateEntity taskState) {
-		return taskRepository.findByUserAndTaskState(user, taskState);
+	public List<TaskEntity> getTasksByStateAndMember(Long taskStateId, Long memberCode) {
+		return taskRepository.getTasksByMemberAndState(memberCode, taskStateId);
 	}
 
 	@Override
 	public TaskEntity updateTask(TaskEntity task) {
 		return taskRepository.save(task);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByState(Long taskStateId) {
+		return taskRepository.getTasksByState(taskStateId);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByMember(Long memberCode) {
+		return taskRepository.getTasksByMember(memberCode);
 	}
 
 }

@@ -2,19 +2,25 @@ package com.ai.st.microservice.tasks.repositories;
 
 import java.util.List;
 
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
-import com.ai.st.entities.schema.administration.UserEntity;
-import com.ai.st.entities.schema.tasks.TaskEntity;
-import com.ai.st.entities.schema.tasks.TaskStateEntity;
+import com.ai.st.microservice.tasks.entities.TaskEntity;
 
 public interface TaskRepository extends CrudRepository<TaskEntity, Long> {
 
 	@Override
 	List<TaskEntity> findAll();
 
-	List<TaskEntity> findByUser(UserEntity user);
+	@Query("SELECT t FROM TaskEntity t JOIN TaskMemberEntity tm ON t.id = tm.task.id AND tm.memberCode = :memberCode WHERE t.taskState.id = :taskStateId")
+	List<TaskEntity> getTasksByMemberAndState(@Param("memberCode") Long memberCode,
+			@Param("taskStateId") Long taskStateId);
 
-	List<TaskEntity> findByUserAndTaskState(UserEntity user, TaskStateEntity taskState);
+	@Query("SELECT t FROM TaskEntity t JOIN TaskMemberEntity tm ON t.id = tm.task.id AND tm.memberCode = :memberCode")
+	List<TaskEntity> getTasksByMember(@Param("memberCode") Long memberCode);
+	
+	@Query("SELECT t FROM TaskEntity t WHERE t.taskState.id = :taskStateId")
+	List<TaskEntity> getTasksByState(@Param("taskStateId") Long taskStateId);
 
 }

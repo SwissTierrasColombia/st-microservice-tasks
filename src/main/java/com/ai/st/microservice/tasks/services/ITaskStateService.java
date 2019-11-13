@@ -1,6 +1,6 @@
 package com.ai.st.microservice.tasks.services;
 
-import com.ai.st.entities.schema.tasks.TaskStateEntity;
+import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 
 public interface ITaskStateService {
 

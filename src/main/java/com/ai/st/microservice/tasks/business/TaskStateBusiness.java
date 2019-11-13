@@ -3,8 +3,8 @@ package com.ai.st.microservice.tasks.business;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.entities.schema.tasks.TaskStateEntity;
 import com.ai.st.microservice.tasks.dto.TaskStateDto;
+import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 import com.ai.st.microservice.tasks.services.ITaskStateService;
 
 @Component

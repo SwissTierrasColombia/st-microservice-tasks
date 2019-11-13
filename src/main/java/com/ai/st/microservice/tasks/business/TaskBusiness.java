@@ -7,17 +7,14 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.ai.st.entities.schema.administration.UserEntity;
-import com.ai.st.entities.schema.tasks.TaskEntity;
-import com.ai.st.entities.schema.tasks.TaskStateEntity;
-import com.ai.st.microservice.tasks.clients.UserFeignClient;
 import com.ai.st.microservice.tasks.dto.TaskDto;
+import com.ai.st.microservice.tasks.dto.TaskMemberDto;
 import com.ai.st.microservice.tasks.dto.TaskStateDto;
-import com.ai.st.microservice.tasks.dto.UserDto;
+import com.ai.st.microservice.tasks.entities.TaskEntity;
+import com.ai.st.microservice.tasks.entities.TaskMemberEntity;
+import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 import com.ai.st.microservice.tasks.exceptions.BusinessException;
 import com.ai.st.microservice.tasks.services.ITaskService;
-
-import feign.FeignException;
 
 @Component
 public class TaskBusiness {
@@ -27,9 +24,6 @@ public class TaskBusiness {
 
 	@Autowired
 	private TaskStateBusiness taskStateBusiness;
-
-	@Autowired
-	private UserFeignClient userClient;
 
 	public List<TaskDto> getAllTasks() {
 
@@ -44,7 +38,7 @@ public class TaskBusiness {
 		return listTasksDto;
 	}
 
-	public TaskDto createTask(String name, String description, Long userId, Long createdBy, Date deadline)
+	public TaskDto createTask(String name, String description, Long memberCode, Date deadline)
 			throws BusinessException {
 
 		TaskDto taskDto = null;
@@ -56,13 +50,6 @@ public class TaskBusiness {
 			if (!deadline.after(currentDate)) {
 				throw new BusinessException("The deadline must be greater than the current date.");
 			}
-		}
-
-		// validate if the user exists
-		try {
-			userClient.findById(userId);
-		} catch (FeignException e) {
-			throw new BusinessException("User not found.");
 		}
 
 		// set task state
@@ -78,22 +65,25 @@ public class TaskBusiness {
 			taskEntity.setDeadline(deadline);
 			taskEntity.setCreatedAt(currentDate);
 
-			UserEntity userEntity = new UserEntity();
-			userEntity.setId(userId);
-			taskEntity.setUser(userEntity);
-
-			UserEntity createdByEntity = new UserEntity();
-			createdByEntity.setId(createdBy);
-			taskEntity.setCreatedBy(createdByEntity);
-
 			TaskStateEntity taskStateEntity = new TaskStateEntity();
 			taskStateEntity.setId(taskStateDto.getId());
 			taskEntity.setTaskState(taskStateEntity);
+
+			TaskMemberEntity taskMemberEntity = new TaskMemberEntity();
+			taskMemberEntity.setMemberCode(memberCode);
+			taskMemberEntity.setCreatedAt(currentDate);
+			taskMemberEntity.setTask(taskEntity);
+
+			List<TaskMemberEntity> members = new ArrayList<TaskMemberEntity>();
+			members.add(taskMemberEntity);
+
+			taskEntity.setMembers(members);
 
 			TaskEntity newTaskEntity = taskService.createTask(taskEntity);
 			taskDto = entityParseDto(newTaskEntity);
 
 		} catch (Exception e) {
+			System.out.println("error creadno_ " + e.getMessage());
 			throw new BusinessException("The task could not be created.");
 		}
 
@@ -112,17 +102,22 @@ public class TaskBusiness {
 		return taskDto;
 	}
 
-	public List<TaskDto> getTaskByUserAndTaskState(Long userId, Long taskStateId) {
+	public List<TaskDto> getTasksByFilters(Long memberCode, Long taskStateId) {
 
 		List<TaskDto> listTasksDto = new ArrayList<TaskDto>();
 
-		UserEntity userEntity = new UserEntity();
-		userEntity.setId(userId);
+		List<TaskEntity> listTasksEntity = new ArrayList<TaskEntity>();
 
-		TaskStateEntity taskStateEntity = new TaskStateEntity();
-		taskStateEntity.setId(taskStateId);
+		if (memberCode != null && taskStateId != null) {
+			listTasksEntity = taskService.getTasksByStateAndMember(taskStateId, memberCode);
+		} else if (memberCode != null) {
+			listTasksEntity = taskService.getTasksByMember(memberCode);
+		} else if (taskStateId != null) {
+			listTasksEntity = taskService.getTasksByState(taskStateId);
+		} else {
+			listTasksEntity = taskService.getAllTasks();
+		}
 
-		List<TaskEntity> listTasksEntity = taskService.getTasksByUserAndState(userEntity, taskStateEntity);
 		for (TaskEntity taskEntity : listTasksEntity) {
 			TaskDto taskDto = entityParseDto(taskEntity);
 			listTasksDto.add(taskDto);
@@ -131,7 +126,7 @@ public class TaskBusiness {
 		return listTasksDto;
 	}
 
-	public TaskDto closeTask(Long taskId, Long userId) throws BusinessException {
+	public TaskDto closeTask(Long taskId) throws BusinessException {
 
 		TaskDto taskDto = null;
 
@@ -139,11 +134,6 @@ public class TaskBusiness {
 		TaskEntity taskEntity = taskService.getById(taskId);
 		if (!(taskEntity instanceof TaskEntity)) {
 			throw new BusinessException("Task not found.");
-		}
-
-		// verify that the user who will close the task is the same as the one assigned
-		if (taskEntity.getUser().getId() != userId) {
-			throw new BusinessException("The user is not the owner of the task.");
 		}
 
 		Date currentDate = new Date();
@@ -164,7 +154,6 @@ public class TaskBusiness {
 			taskDto = entityParseDto(taskUpdatedEntity);
 
 		} catch (Exception e) {
-			System.out.println("error " + e.getMessage());
 			throw new BusinessException("The task could not be updated.");
 		}
 
@@ -189,15 +178,15 @@ public class TaskBusiness {
 			TaskStateEntity taskStateEntity = taskEntity.getTaskState();
 			taskDto.setTaskState(new TaskStateDto(taskStateEntity.getId(), taskStateEntity.getName()));
 
-			// set user
-			UserEntity userEntity = taskEntity.getUser();
-			taskDto.setUser(new UserDto(userEntity.getId(), userEntity.getFirstName(), userEntity.getLastName(),
-					userEntity.getEmail(), userEntity.getUsername()));
+			// set members
+			for (TaskMemberEntity taskMemberEntity : taskEntity.getMembers()) {
+				TaskMemberDto member = new TaskMemberDto();
+				member.setId(taskMemberEntity.getId());
+				member.setMemberCode(taskMemberEntity.getMemberCode());
+				member.setCreatedAt(taskMemberEntity.getCreatedAt());
+				taskDto.getMembers().add(member);
+			}
 
-			// set createdBy
-			UserEntity createdByEntity = taskEntity.getCreatedBy();
-			taskDto.setCreatedBy(new UserDto(createdByEntity.getId(), createdByEntity.getFirstName(),
-					createdByEntity.getLastName(), createdByEntity.getEmail(), createdByEntity.getUsername()));
 		}
 
 		return taskDto;
