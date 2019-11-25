@@ -3,18 +3,22 @@ package com.ai.st.microservice.tasks.business;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.tasks.dto.TaskCategoryDto;
 import com.ai.st.microservice.tasks.dto.TaskDto;
 import com.ai.st.microservice.tasks.dto.TaskMemberDto;
 import com.ai.st.microservice.tasks.dto.TaskStateDto;
+import com.ai.st.microservice.tasks.entities.TaskCategoryEntity;
 import com.ai.st.microservice.tasks.entities.TaskEntity;
 import com.ai.st.microservice.tasks.entities.TaskMemberEntity;
 import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 import com.ai.st.microservice.tasks.exceptions.BusinessException;
 import com.ai.st.microservice.tasks.services.ITaskService;
+import com.ai.st.microservice.tasks.services.TaskCategoryService;
 
 @Component
 public class TaskBusiness {
@@ -24,6 +28,9 @@ public class TaskBusiness {
 
 	@Autowired
 	private TaskStateBusiness taskStateBusiness;
+
+	@Autowired
+	private TaskCategoryService taskCategoryService;
 
 	public List<TaskDto> getAllTasks() {
 
@@ -38,7 +45,7 @@ public class TaskBusiness {
 		return listTasksDto;
 	}
 
-	public TaskDto createTask(String name, String description, Long memberCode, Date deadline)
+	public TaskDto createTask(String name, String description, List<Long> users, Date deadline, List<Long> categories)
 			throws BusinessException {
 
 		TaskDto taskDto = null;
@@ -58,6 +65,16 @@ public class TaskBusiness {
 			throw new BusinessException("Task state not found.");
 		}
 
+		List<Long> listUsers = users.stream().distinct().collect(Collectors.toList());
+		List<Long> listCategories = categories.stream().distinct().collect(Collectors.toList());
+
+		for (Long categoryId : listCategories) {
+			TaskCategoryEntity categoryEntity = taskCategoryService.getCategoryById(categoryId);
+			if (!(categoryEntity instanceof TaskCategoryEntity)) {
+				throw new BusinessException("No se ha encontrado la cagegoría.");
+			}
+		}
+
 		try {
 			TaskEntity taskEntity = new TaskEntity();
 			taskEntity.setName(name);
@@ -69,21 +86,28 @@ public class TaskBusiness {
 			taskStateEntity.setId(taskStateDto.getId());
 			taskEntity.setTaskState(taskStateEntity);
 
-			TaskMemberEntity taskMemberEntity = new TaskMemberEntity();
-			taskMemberEntity.setMemberCode(memberCode);
-			taskMemberEntity.setCreatedAt(currentDate);
-			taskMemberEntity.setTask(taskEntity);
-
 			List<TaskMemberEntity> members = new ArrayList<TaskMemberEntity>();
-			members.add(taskMemberEntity);
-
+			for (Long userCode : listUsers) {
+				TaskMemberEntity taskMemberEntity = new TaskMemberEntity();
+				taskMemberEntity.setMemberCode(userCode);
+				taskMemberEntity.setCreatedAt(currentDate);
+				taskMemberEntity.setTask(taskEntity);
+				members.add(taskMemberEntity);
+			}
 			taskEntity.setMembers(members);
+
+			List<TaskCategoryEntity> categoriesEntity = new ArrayList<TaskCategoryEntity>();
+			for (Long categoryId : listCategories) {
+				TaskCategoryEntity category = new TaskCategoryEntity();
+				category.setId(categoryId);
+				categoriesEntity.add(category);
+			}
+			taskEntity.setCategories(categoriesEntity);
 
 			TaskEntity newTaskEntity = taskService.createTask(taskEntity);
 			taskDto = entityParseDto(newTaskEntity);
 
 		} catch (Exception e) {
-			System.out.println("error creadno_ " + e.getMessage());
 			throw new BusinessException("The task could not be created.");
 		}
 
@@ -185,6 +209,14 @@ public class TaskBusiness {
 				member.setMemberCode(taskMemberEntity.getMemberCode());
 				member.setCreatedAt(taskMemberEntity.getCreatedAt());
 				taskDto.getMembers().add(member);
+			}
+
+			// set categories
+			for (TaskCategoryEntity categoryEntity : taskEntity.getCategories()) {
+				TaskCategoryDto categoryDto = new TaskCategoryDto();
+				categoryDto.setId(categoryEntity.getId());
+				categoryDto.setName(categoryEntity.getName());
+				taskDto.getCategories().add(categoryDto);
 			}
 
 		}

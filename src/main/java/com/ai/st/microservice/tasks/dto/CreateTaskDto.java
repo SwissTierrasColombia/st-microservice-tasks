@@ -1,18 +1,21 @@
-package com.ai.st.microservice.tasks.swagger.models;
+package com.ai.st.microservice.tasks.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-public class CreateTaskModel implements Serializable {
+public class CreateTaskDto implements Serializable {
 
 	private static final long serialVersionUID = 8405437490199078160L;
 
 	private String name;
 	private String description;
 	private String deadline;
-	private Long userId;
+	private List<Long> users;
+	private List<Long> categories;
 
-	public CreateTaskModel() {
-
+	public CreateTaskDto() {
+		this.users = new ArrayList<Long>();
 	}
 
 	public String getName() {
@@ -39,12 +42,20 @@ public class CreateTaskModel implements Serializable {
 		this.deadline = deadline;
 	}
 
-	public Long getUserId() {
-		return userId;
+	public List<Long> getUsers() {
+		return users;
 	}
 
-	public void setUserId(Long userId) {
-		this.userId = userId;
+	public void setUsers(List<Long> users) {
+		this.users = users;
+	}
+
+	public List<Long> getCategories() {
+		return categories;
+	}
+
+	public void setCategories(List<Long> categories) {
+		this.categories = categories;
 	}
 
 }

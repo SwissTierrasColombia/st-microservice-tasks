@@ -7,8 +7,11 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.tasks.business.TaskCategoryBusiness;
 import com.ai.st.microservice.tasks.business.TaskStateBusiness;
+import com.ai.st.microservice.tasks.entities.TaskCategoryEntity;
 import com.ai.st.microservice.tasks.entities.TaskStateEntity;
+import com.ai.st.microservice.tasks.services.ITaskCategoryService;
 import com.ai.st.microservice.tasks.services.ITaskStateService;
 
 @Component
@@ -18,11 +21,15 @@ public class StMicroserviceTaskApplicationStartup implements ApplicationListener
 
 	@Autowired
 	private ITaskStateService taskStateService;
+	
+	@Autowired
+	private ITaskCategoryService taskCategoryService;
 
 	@Override
 	public void onApplicationEvent(ContextRefreshedEvent event) {
 		log.info("ST - Loading Domains ... ");
 		this.initTasksStates();
+		this.initTasksCategories();
 	}
 
 	public void initTasksStates() {
@@ -48,6 +55,26 @@ public class StMicroserviceTaskApplicationStartup implements ApplicationListener
 
 				log.info("The domains have been loaded!");
 
+			} catch (Exception e) {
+				log.error("Failed to load domains");
+			}
+
+		}
+	}
+	
+	public void initTasksCategories() {
+		Long countCategories = taskCategoryService.getCount();
+		if (countCategories == 0) {
+
+			try {
+
+				TaskCategoryEntity categoryIntegration = new TaskCategoryEntity();
+				categoryIntegration.setId(TaskCategoryBusiness.TASK_CATEGORY_INTEGRATION);
+				categoryIntegration.setName("INTEGRACIÓN");
+				
+				taskCategoryService.createTaskCategory(categoryIntegration);
+				
+				log.info("The domains have been loaded!");
 			} catch (Exception e) {
 				log.error("Failed to load domains");
 			}
