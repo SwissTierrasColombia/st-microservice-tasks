@@ -55,4 +55,9 @@ public class TaskService implements ITaskService {
 		return taskRepository.getTasksByMember(memberCode);
 	}
 
+	@Override
+	public Long getCount() {
+		return taskRepository.count();
+	}
+
 }

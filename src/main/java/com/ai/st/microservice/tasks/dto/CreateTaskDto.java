@@ -13,6 +13,7 @@ public class CreateTaskDto implements Serializable {
 	private String deadline;
 	private List<Long> users;
 	private List<Long> categories;
+	private List<CreateTaskMetadataDto> metadata;
 
 	public CreateTaskDto() {
 		this.users = new ArrayList<Long>();
@@ -56,6 +57,14 @@ public class CreateTaskDto implements Serializable {
 
 	public void setCategories(List<Long> categories) {
 		this.categories = categories;
+	}
+
+	public List<CreateTaskMetadataDto> getMetadata() {
+		return metadata;
+	}
+
+	public void setMetadata(List<CreateTaskMetadataDto> metadata) {
+		this.metadata = metadata;
 	}
 
 }

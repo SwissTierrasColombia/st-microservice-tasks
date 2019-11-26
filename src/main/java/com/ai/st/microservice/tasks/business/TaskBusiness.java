@@ -8,13 +8,16 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.ai.st.microservice.tasks.dto.CreateTaskMetadataDto;
 import com.ai.st.microservice.tasks.dto.TaskCategoryDto;
 import com.ai.st.microservice.tasks.dto.TaskDto;
 import com.ai.st.microservice.tasks.dto.TaskMemberDto;
+import com.ai.st.microservice.tasks.dto.TaskMetadataDto;
 import com.ai.st.microservice.tasks.dto.TaskStateDto;
 import com.ai.st.microservice.tasks.entities.TaskCategoryEntity;
 import com.ai.st.microservice.tasks.entities.TaskEntity;
 import com.ai.st.microservice.tasks.entities.TaskMemberEntity;
+import com.ai.st.microservice.tasks.entities.TaskMetadataEntity;
 import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 import com.ai.st.microservice.tasks.exceptions.BusinessException;
 import com.ai.st.microservice.tasks.services.ITaskService;
@@ -45,8 +48,8 @@ public class TaskBusiness {
 		return listTasksDto;
 	}
 
-	public TaskDto createTask(String name, String description, List<Long> users, Date deadline, List<Long> categories)
-			throws BusinessException {
+	public TaskDto createTask(String name, String description, List<Long> users, Date deadline, List<Long> categories,
+			List<CreateTaskMetadataDto> metadata) throws BusinessException {
 
 		TaskDto taskDto = null;
 
@@ -68,10 +71,23 @@ public class TaskBusiness {
 		List<Long> listUsers = users.stream().distinct().collect(Collectors.toList());
 		List<Long> listCategories = categories.stream().distinct().collect(Collectors.toList());
 
+		// validate categories
 		for (Long categoryId : listCategories) {
 			TaskCategoryEntity categoryEntity = taskCategoryService.getCategoryById(categoryId);
 			if (!(categoryEntity instanceof TaskCategoryEntity)) {
 				throw new BusinessException("No se ha encontrado la cagegoría.");
+			}
+		}
+
+		// validate metadata
+		if (metadata.size() > 0) {
+			for (CreateTaskMetadataDto meta : metadata) {
+				if (meta.getKey().isEmpty() || meta.getKey() == null) {
+					throw new BusinessException("Metadato inválido.");
+				}
+				if (meta.getValue().isEmpty() || meta.getValue() == null) {
+					throw new BusinessException("Metadato inválido.");
+				}
 			}
 		}
 
@@ -86,6 +102,7 @@ public class TaskBusiness {
 			taskStateEntity.setId(taskStateDto.getId());
 			taskEntity.setTaskState(taskStateEntity);
 
+			// set members
 			List<TaskMemberEntity> members = new ArrayList<TaskMemberEntity>();
 			for (Long userCode : listUsers) {
 				TaskMemberEntity taskMemberEntity = new TaskMemberEntity();
@@ -96,6 +113,7 @@ public class TaskBusiness {
 			}
 			taskEntity.setMembers(members);
 
+			// set categories
 			List<TaskCategoryEntity> categoriesEntity = new ArrayList<TaskCategoryEntity>();
 			for (Long categoryId : listCategories) {
 				TaskCategoryEntity category = new TaskCategoryEntity();
@@ -103,6 +121,19 @@ public class TaskBusiness {
 				categoriesEntity.add(category);
 			}
 			taskEntity.setCategories(categoriesEntity);
+
+			// set metadata
+			if (metadata.size() > 0) {
+				List<TaskMetadataEntity> listMetadataEntity = new ArrayList<TaskMetadataEntity>();
+				for (CreateTaskMetadataDto meta : metadata) {
+					TaskMetadataEntity metadataEntity = new TaskMetadataEntity();
+					metadataEntity.setKey(meta.getKey());
+					metadataEntity.setValue(meta.getValue());
+					metadataEntity.setTask(taskEntity);
+					listMetadataEntity.add(metadataEntity);
+				}
+				taskEntity.setMetadata(listMetadataEntity);
+			}
 
 			TaskEntity newTaskEntity = taskService.createTask(taskEntity);
 			taskDto = entityParseDto(newTaskEntity);
@@ -217,6 +248,15 @@ public class TaskBusiness {
 				categoryDto.setId(categoryEntity.getId());
 				categoryDto.setName(categoryEntity.getName());
 				taskDto.getCategories().add(categoryDto);
+			}
+
+			// set metadata
+			for (TaskMetadataEntity metadata : taskEntity.getMetadata()) {
+				TaskMetadataDto metadataDto = new TaskMetadataDto();
+				metadataDto.setId(metadata.getId());
+				metadataDto.setKey(metadata.getKey());
+				metadataDto.setValue(metadata.getValue());
+				taskDto.getMetadata().add(metadataDto);
 			}
 
 		}

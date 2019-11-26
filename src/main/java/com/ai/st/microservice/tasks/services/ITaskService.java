@@ -20,4 +20,6 @@ public interface ITaskService {
 
 	public TaskEntity updateTask(TaskEntity task);
 
+	public Long getCount();
+
 }

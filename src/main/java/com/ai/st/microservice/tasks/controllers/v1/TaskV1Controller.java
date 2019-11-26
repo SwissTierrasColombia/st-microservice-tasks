@@ -97,16 +97,15 @@ public class TaskV1Controller {
 			if (taskUsers.size() == 0) {
 				throw new InputValidationException("La tarea debe tener al menos un usuario.");
 			}
-			
+
 			// validation categories
 			List<Long> taskCategories = taskRequest.getCategories();
 			if (taskCategories.size() == 0) {
 				throw new InputValidationException("La tarea debe tener al menos una categoria.");
 			}
 
-			String taskDescription = taskRequest.getDescription();
-
-			responseDto = taskBusiness.createTask(taskName, taskDescription, taskUsers, taskDeadline, taskCategories);
+			responseDto = taskBusiness.createTask(taskName, taskRequest.getDescription(), taskUsers, taskDeadline,
+					taskCategories, taskRequest.getMetadata());
 			httpStatus = HttpStatus.CREATED;
 
 		} catch (InputValidationException e) {

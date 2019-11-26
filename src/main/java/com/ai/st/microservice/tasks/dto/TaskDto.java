@@ -40,9 +40,13 @@ public class TaskDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Categories")
 	private List<TaskCategoryDto> categories;
 
+	@ApiModelProperty(required = true, notes = "Metadata")
+	private List<TaskMetadataDto> metadata;
+
 	public TaskDto() {
 		this.members = new ArrayList<TaskMemberDto>();
 		this.categories = new ArrayList<TaskCategoryDto>();
+		this.metadata = new ArrayList<TaskMetadataDto>();
 	}
 
 	public Long getId() {
@@ -115,6 +119,14 @@ public class TaskDto implements Serializable {
 
 	public void setCategories(List<TaskCategoryDto> categories) {
 		this.categories = categories;
+	}
+
+	public List<TaskMetadataDto> getMetadata() {
+		return metadata;
+	}
+
+	public void setMetadata(List<TaskMetadataDto> metadata) {
+		this.metadata = metadata;
 	}
 
 }

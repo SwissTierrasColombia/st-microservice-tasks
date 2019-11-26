@@ -54,6 +54,9 @@ public class TaskEntity {
 	@OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
 	private List<TaskMemberEntity> members = new ArrayList<TaskMemberEntity>();
 
+	@OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+	private List<TaskMetadataEntity> metadata = new ArrayList<TaskMetadataEntity>();
+
 	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(schema = "tasks", name = "tasks_x_categories", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
 	List<TaskCategoryEntity> categories;
@@ -132,6 +135,14 @@ public class TaskEntity {
 
 	public void setMembers(List<TaskMemberEntity> members) {
 		this.members = members;
+	}
+
+	public List<TaskMetadataEntity> getMetadata() {
+		return metadata;
+	}
+
+	public void setMetadata(List<TaskMetadataEntity> metadata) {
+		this.metadata = metadata;
 	}
 
 }
