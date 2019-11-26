@@ -13,6 +13,7 @@ public class TaskStateBusiness {
 	public static final Long TASK_STATE_ASSIGNED = (long) 1;
 	public static final Long TASK_STATE_CLOSED = (long) 2;
 	public static final Long TASK_STATE_CANCELLED = (long) 3;
+	public static final Long TASK_STATE_STARTED = (long) 4;
 
 	@Autowired
 	private ITaskStateService taskStateService;

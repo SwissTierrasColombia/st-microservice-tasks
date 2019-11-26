@@ -64,6 +64,11 @@ public class StMicroserviceTaskApplicationStartup implements ApplicationListener
 				taskStateCancelled.setId(TaskStateBusiness.TASK_STATE_CANCELLED);
 				taskStateCancelled.setName("CANCELADA");
 				taskStateService.createTaskState(taskStateCancelled);
+				
+				TaskStateEntity taskStateStarted = new TaskStateEntity();
+				taskStateStarted.setId(TaskStateBusiness.TASK_STATE_STARTED);
+				taskStateStarted.setName("INICIADA");
+				taskStateService.createTaskState(taskStateStarted);
 
 				log.info("The domains have been loaded!");
 
