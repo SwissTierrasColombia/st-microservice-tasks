@@ -1,20 +1,15 @@
 package com.ai.st.microservice.tasks.entities;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "tasks_categories", schema = "tasks")
-public class TaskCategoryEntity {
+@Table(name = "tasks_types_steps", schema = "tasks")
+public class TaskTypeStepEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,8 +18,8 @@ public class TaskCategoryEntity {
 
 	@Column(name = "name", nullable = false, length = 255)
 	private String name;
-
-	public TaskCategoryEntity() {
+	
+	public TaskTypeStepEntity() {
 
 	}
 
@@ -43,5 +38,5 @@ public class TaskCategoryEntity {
 	public void setName(String name) {
 		this.name = name;
 	}
-
+	
 }

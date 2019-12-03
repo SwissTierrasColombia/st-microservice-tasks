@@ -61,6 +61,9 @@ public class TaskEntity {
 	@JoinTable(schema = "tasks", name = "tasks_x_categories", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
 	List<TaskCategoryEntity> categories;
 
+	@OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+	private List<TaskStepEntity> steps = new ArrayList<TaskStepEntity>();
+
 	public TaskEntity() {
 
 	}
@@ -143,6 +146,14 @@ public class TaskEntity {
 
 	public void setMetadata(List<TaskMetadataEntity> metadata) {
 		this.metadata = metadata;
+	}
+
+	public List<TaskStepEntity> getSteps() {
+		return steps;
+	}
+
+	public void setSteps(List<TaskStepEntity> steps) {
+		this.steps = steps;
 	}
 
 }

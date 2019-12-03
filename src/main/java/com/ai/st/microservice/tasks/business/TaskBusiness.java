@@ -14,11 +14,14 @@ import com.ai.st.microservice.tasks.dto.TaskDto;
 import com.ai.st.microservice.tasks.dto.TaskMemberDto;
 import com.ai.st.microservice.tasks.dto.TaskMetadataDto;
 import com.ai.st.microservice.tasks.dto.TaskStateDto;
+import com.ai.st.microservice.tasks.dto.TaskStepDto;
+import com.ai.st.microservice.tasks.dto.TaskTypeStepDto;
 import com.ai.st.microservice.tasks.entities.TaskCategoryEntity;
 import com.ai.st.microservice.tasks.entities.TaskEntity;
 import com.ai.st.microservice.tasks.entities.TaskMemberEntity;
 import com.ai.st.microservice.tasks.entities.TaskMetadataEntity;
 import com.ai.st.microservice.tasks.entities.TaskStateEntity;
+import com.ai.st.microservice.tasks.entities.TaskStepEntity;
 import com.ai.st.microservice.tasks.exceptions.BusinessException;
 import com.ai.st.microservice.tasks.services.ITaskService;
 import com.ai.st.microservice.tasks.services.TaskCategoryService;
@@ -257,6 +260,18 @@ public class TaskBusiness {
 				metadataDto.setKey(metadata.getKey());
 				metadataDto.setValue(metadata.getValue());
 				taskDto.getMetadata().add(metadataDto);
+			}
+
+			// set steps
+			for (TaskStepEntity stepEntity : taskEntity.getSteps()) {
+				TaskStepDto stepDto = new TaskStepDto();
+				stepDto.setCode(stepEntity.getCode());
+				stepDto.setDescription(stepEntity.getDescription());
+				stepDto.setId(stepEntity.getId());
+				stepDto.setStatus(stepEntity.getStatus());
+				stepDto.setTypeStep(
+						new TaskTypeStepDto(stepEntity.getTypeStep().getId(), stepEntity.getTypeStep().getName()));
+				taskDto.getSteps().add(stepDto);
 			}
 
 		}
