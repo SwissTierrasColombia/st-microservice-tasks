@@ -105,7 +105,7 @@ public class TaskV1Controller {
 			}
 
 			responseDto = taskBusiness.createTask(taskName, taskRequest.getDescription(), taskUsers, taskDeadline,
-					taskCategories, taskRequest.getMetadata());
+					taskCategories, taskRequest.getMetadata(), taskRequest.getSteps());
 			httpStatus = HttpStatus.CREATED;
 
 		} catch (InputValidationException e) {

@@ -1,16 +1,18 @@
 package com.ai.st.microservice.tasks.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CreateTaskMetadataDto implements Serializable {
 
 	private static final long serialVersionUID = 3915775195611030554L;
 
 	private String key;
-	private String value;
+	private List<CreateTaskPropertyDto> properties;
 
 	public CreateTaskMetadataDto() {
-
+		this.properties = new ArrayList<>();
 	}
 
 	public String getKey() {
@@ -21,12 +23,12 @@ public class CreateTaskMetadataDto implements Serializable {
 		this.key = key;
 	}
 
-	public String getValue() {
-		return value;
+	public List<CreateTaskPropertyDto> getProperties() {
+		return properties;
 	}
 
-	public void setValue(String value) {
-		this.value = value;
+	public void setProperties(List<CreateTaskPropertyDto> properties) {
+		this.properties = properties;
 	}
 
 }

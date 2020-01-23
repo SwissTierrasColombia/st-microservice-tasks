@@ -9,22 +9,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.tasks.dto.CreateTaskMetadataDto;
+import com.ai.st.microservice.tasks.dto.CreateTaskPropertyDto;
+import com.ai.st.microservice.tasks.dto.CreateTaskStepDto;
 import com.ai.st.microservice.tasks.dto.TaskCategoryDto;
 import com.ai.st.microservice.tasks.dto.TaskDto;
 import com.ai.st.microservice.tasks.dto.TaskMemberDto;
 import com.ai.st.microservice.tasks.dto.TaskMetadataDto;
+import com.ai.st.microservice.tasks.dto.TaskMetadataPropertyDto;
 import com.ai.st.microservice.tasks.dto.TaskStateDto;
 import com.ai.st.microservice.tasks.dto.TaskStepDto;
 import com.ai.st.microservice.tasks.dto.TaskTypeStepDto;
+import com.ai.st.microservice.tasks.entities.MetadataPropertyEntity;
 import com.ai.st.microservice.tasks.entities.TaskCategoryEntity;
 import com.ai.st.microservice.tasks.entities.TaskEntity;
 import com.ai.st.microservice.tasks.entities.TaskMemberEntity;
 import com.ai.st.microservice.tasks.entities.TaskMetadataEntity;
 import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 import com.ai.st.microservice.tasks.entities.TaskStepEntity;
+import com.ai.st.microservice.tasks.entities.TaskTypeStepEntity;
 import com.ai.st.microservice.tasks.exceptions.BusinessException;
 import com.ai.st.microservice.tasks.services.ITaskService;
 import com.ai.st.microservice.tasks.services.TaskCategoryService;
+import com.ai.st.microservice.tasks.services.TaskTypeStepService;
 
 @Component
 public class TaskBusiness {
@@ -37,6 +43,9 @@ public class TaskBusiness {
 
 	@Autowired
 	private TaskCategoryService taskCategoryService;
+
+	@Autowired
+	private TaskTypeStepService taskTypeStepService;
 
 	public List<TaskDto> getAllTasks() {
 
@@ -52,7 +61,7 @@ public class TaskBusiness {
 	}
 
 	public TaskDto createTask(String name, String description, List<Long> users, Date deadline, List<Long> categories,
-			List<CreateTaskMetadataDto> metadata) throws BusinessException {
+			List<CreateTaskMetadataDto> metadata, List<CreateTaskStepDto> steps) throws BusinessException {
 
 		TaskDto taskDto = null;
 
@@ -88,8 +97,27 @@ public class TaskBusiness {
 				if (meta.getKey().isEmpty() || meta.getKey() == null) {
 					throw new BusinessException("Metadato inválido.");
 				}
-				if (meta.getValue().isEmpty() || meta.getValue() == null) {
-					throw new BusinessException("Metadato inválido.");
+				if (meta.getProperties().size() == 0) {
+					throw new BusinessException("El metadato debe tener al menos una propiedad.");
+				}
+			}
+		}
+
+		// validate steps
+		if (steps.size() > 0) {
+			for (CreateTaskStepDto stepDto : steps) {
+				if (stepDto.getTitle().isEmpty() || stepDto.getTitle() == null) {
+					throw new BusinessException("El título del paso es requerido.");
+				}
+				if (stepDto.getDescription().isEmpty() || stepDto.getDescription() == null) {
+					throw new BusinessException("La descripción del paso es requerido.");
+				}
+				if (stepDto.getTypeStepId() == null) {
+					throw new BusinessException("La tipo de paso es requerido.");
+				}
+				TaskTypeStepEntity typeStepEntity = taskTypeStepService.getTypeStepById(stepDto.getTypeStepId());
+				if (!(typeStepEntity instanceof TaskTypeStepEntity)) {
+					throw new BusinessException("La tipo de paso no existe.");
 				}
 			}
 		}
@@ -131,11 +159,42 @@ public class TaskBusiness {
 				for (CreateTaskMetadataDto meta : metadata) {
 					TaskMetadataEntity metadataEntity = new TaskMetadataEntity();
 					metadataEntity.setKey(meta.getKey());
-					metadataEntity.setValue(meta.getValue());
 					metadataEntity.setTask(taskEntity);
+
+					// set properties
+					List<MetadataPropertyEntity> propertiesEntity = new ArrayList<>();
+					for (CreateTaskPropertyDto propertyDto : meta.getProperties()) {
+						MetadataPropertyEntity propertyEntity = new MetadataPropertyEntity();
+						propertyEntity.setKey(propertyDto.getKey());
+						propertyEntity.setValue(propertyDto.getValue());
+						propertyEntity.setMetadata(metadataEntity);
+						propertiesEntity.add(propertyEntity);
+					}
+
+					metadataEntity.setProperties(propertiesEntity);
+
 					listMetadataEntity.add(metadataEntity);
 				}
 				taskEntity.setMetadata(listMetadataEntity);
+			}
+
+			if (steps.size() > 0) {
+
+				List<TaskStepEntity> listStepsEntity = new ArrayList<>();
+				for (CreateTaskStepDto stepDto : steps) {
+
+					TaskStepEntity stepEntity = new TaskStepEntity();
+					stepEntity.setCode("N/A");
+					stepEntity.setDescription(stepDto.getDescription());
+					stepEntity.setStatus(false);
+					stepEntity.setTask(taskEntity);
+					TaskTypeStepEntity typeStepEntity = taskTypeStepService.getTypeStepById(stepDto.getTypeStepId());
+					stepEntity.setTypeStep(typeStepEntity);
+
+					listStepsEntity.add(stepEntity);
+				}
+
+				taskEntity.setSteps(listStepsEntity);
 			}
 
 			TaskEntity newTaskEntity = taskService.createTask(taskEntity);
@@ -258,7 +317,13 @@ public class TaskBusiness {
 				TaskMetadataDto metadataDto = new TaskMetadataDto();
 				metadataDto.setId(metadata.getId());
 				metadataDto.setKey(metadata.getKey());
-				metadataDto.setValue(metadata.getValue());
+
+				for (MetadataPropertyEntity propertyEntity : metadata.getProperties()) {
+
+					metadataDto.getProperties().add(new TaskMetadataPropertyDto(propertyEntity.getId(),
+							propertyEntity.getKey(), propertyEntity.getValue()));
+				}
+
 				taskDto.getMetadata().add(metadataDto);
 			}
 

@@ -1,6 +1,8 @@
 package com.ai.st.microservice.tasks.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -16,11 +18,11 @@ public class TaskMetadataDto implements Serializable {
 	@ApiModelProperty(required = true, notes = "Key")
 	private String key;
 
-	@ApiModelProperty(required = true, notes = "Value")
-	private String value;
+	@ApiModelProperty(required = true, notes = "Properties")
+	private List<TaskMetadataPropertyDto> properties;
 
 	public TaskMetadataDto() {
-
+		this.properties = new ArrayList<>();
 	}
 
 	public Long getId() {
@@ -39,12 +41,12 @@ public class TaskMetadataDto implements Serializable {
 		this.key = key;
 	}
 
-	public String getValue() {
-		return value;
+	public List<TaskMetadataPropertyDto> getProperties() {
+		return properties;
 	}
 
-	public void setValue(String value) {
-		this.value = value;
+	public void setProperties(List<TaskMetadataPropertyDto> properties) {
+		this.properties = properties;
 	}
 
 }
