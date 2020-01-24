@@ -219,18 +219,18 @@ public class TaskBusiness {
 		return taskDto;
 	}
 
-	public List<TaskDto> getTasksByFilters(Long memberCode, Long taskStateId) {
+	public List<TaskDto> getTasksByFilters(Long memberCode, List<Long> taskStates) {
 
 		List<TaskDto> listTasksDto = new ArrayList<TaskDto>();
 
 		List<TaskEntity> listTasksEntity = new ArrayList<TaskEntity>();
 
-		if (memberCode != null && taskStateId != null) {
-			listTasksEntity = taskService.getTasksByStateAndMember(taskStateId, memberCode);
+		if (memberCode != null && taskStates != null && taskStates.size() > 0) {
+			listTasksEntity = taskService.getTasksByStatesAndMember(taskStates, memberCode);
 		} else if (memberCode != null) {
 			listTasksEntity = taskService.getTasksByMember(memberCode);
-		} else if (taskStateId != null) {
-			listTasksEntity = taskService.getTasksByState(taskStateId);
+		} else if (taskStates != null && taskStates.size() > 0) {
+			listTasksEntity = taskService.getTasksByStates(taskStates);
 		} else {
 			listTasksEntity = taskService.getAllTasks();
 		}
@@ -258,6 +258,40 @@ public class TaskBusiness {
 
 		// set task state
 		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_CLOSED);
+		if (taskStateDto == null) {
+			throw new BusinessException("Task state not found.");
+		}
+		TaskStateEntity taskStateEntity = new TaskStateEntity();
+		taskStateEntity.setId(taskStateDto.getId());
+		taskEntity.setTaskState(taskStateEntity);
+
+		try {
+
+			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
+			taskDto = entityParseDto(taskUpdatedEntity);
+
+		} catch (Exception e) {
+			throw new BusinessException("The task could not be updated.");
+		}
+
+		return taskDto;
+	}
+
+	public TaskDto startTask(Long taskId) throws BusinessException {
+
+		TaskDto taskDto = null;
+
+		// verify task exists
+		TaskEntity taskEntity = taskService.getById(taskId);
+		if (!(taskEntity instanceof TaskEntity)) {
+			throw new BusinessException("Task not found.");
+		}
+
+		Date currentDate = new Date();
+		taskEntity.setClosingDate(currentDate);
+
+		// set task state
+		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_STARTED);
 		if (taskStateDto == null) {
 			throw new BusinessException("Task state not found.");
 		}

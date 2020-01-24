@@ -46,13 +46,13 @@ public class TaskV1Controller {
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Get tasks", response = TaskDto.class),
 			@ApiResponse(code = 500, message = "Error Server") })
 	public ResponseEntity<List<TaskDto>> getAllTasks(@RequestParam(required = false, name = "member") Long memberCode,
-			@RequestParam(required = false, name = "state") Long taskStateId) {
+			@RequestParam(required = false, name = "states") List<Long> taskStates) {
 
 		HttpStatus httpStatus = null;
 		List<TaskDto> listTasks = new ArrayList<TaskDto>();
 
 		try {
-			listTasks = taskBusiness.getTasksByFilters(memberCode, taskStateId);
+			listTasks = taskBusiness.getTasksByFilters(memberCode, taskStates);
 
 			httpStatus = HttpStatus.OK;
 		} catch (Exception e) {
@@ -164,6 +164,31 @@ public class TaskV1Controller {
 			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
 		} catch (Exception e) {
 			log.error("Error TaskController@closeTask2 ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(taskDtoResponse, httpStatus);
+	}
+
+	@PutMapping("/{id}/start")
+	@ApiOperation(value = "Start task")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
+			@ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
+	public ResponseEntity<TaskDto> startTask(@PathVariable(required = true) Long id) {
+
+		HttpStatus httpStatus = null;
+		TaskDto taskDtoResponse = null;
+
+		try {
+
+			taskDtoResponse = taskBusiness.startTask(id);
+			httpStatus = HttpStatus.OK;
+
+		} catch (BusinessException e) {
+			log.error("Error TaskController@closeTask#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error TaskController@closeTask#General ---> " + e.getMessage());
 			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
 		}
 
