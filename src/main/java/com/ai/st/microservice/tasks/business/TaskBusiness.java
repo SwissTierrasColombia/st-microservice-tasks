@@ -28,6 +28,7 @@ import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 import com.ai.st.microservice.tasks.entities.TaskStepEntity;
 import com.ai.st.microservice.tasks.entities.TaskTypeStepEntity;
 import com.ai.st.microservice.tasks.exceptions.BusinessException;
+import com.ai.st.microservice.tasks.services.ITaskMemberService;
 import com.ai.st.microservice.tasks.services.ITaskService;
 import com.ai.st.microservice.tasks.services.TaskCategoryService;
 import com.ai.st.microservice.tasks.services.TaskTypeStepService;
@@ -46,6 +47,9 @@ public class TaskBusiness {
 
 	@Autowired
 	private TaskTypeStepService taskTypeStepService;
+
+	@Autowired
+	private ITaskMemberService taskMemberService;
 
 	public List<TaskDto> getAllTasks() {
 
@@ -133,17 +137,6 @@ public class TaskBusiness {
 			taskStateEntity.setId(taskStateDto.getId());
 			taskEntity.setTaskState(taskStateEntity);
 
-			// set members
-			List<TaskMemberEntity> members = new ArrayList<TaskMemberEntity>();
-			for (Long userCode : listUsers) {
-				TaskMemberEntity taskMemberEntity = new TaskMemberEntity();
-				taskMemberEntity.setMemberCode(userCode);
-				taskMemberEntity.setCreatedAt(currentDate);
-				taskMemberEntity.setTask(taskEntity);
-				members.add(taskMemberEntity);
-			}
-			taskEntity.setMembers(members);
-
 			// set categories
 			List<TaskCategoryEntity> categoriesEntity = new ArrayList<TaskCategoryEntity>();
 			for (Long categoryId : listCategories) {
@@ -198,10 +191,15 @@ public class TaskBusiness {
 			}
 
 			TaskEntity newTaskEntity = taskService.createTask(taskEntity);
-			taskDto = entityParseDto(newTaskEntity);
+
+			for (Long userCode : listUsers) {
+				this.addMemberToTask(newTaskEntity, userCode);
+			}
+
+			taskDto = this.getTaskById(newTaskEntity.getId());
 
 		} catch (Exception e) {
-			throw new BusinessException("The task could not be created.");
+			throw new BusinessException("The task could not be created.: " + e.getMessage());
 		}
 
 		return taskDto;
@@ -287,9 +285,6 @@ public class TaskBusiness {
 			throw new BusinessException("Task not found.");
 		}
 
-		Date currentDate = new Date();
-		taskEntity.setClosingDate(currentDate);
-
 		// set task state
 		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_STARTED);
 		if (taskStateDto == null) {
@@ -309,6 +304,93 @@ public class TaskBusiness {
 		}
 
 		return taskDto;
+	}
+
+	public TaskDto cancelTask(Long taskId) throws BusinessException {
+
+		TaskDto taskDto = null;
+
+		// verify task exists
+		TaskEntity taskEntity = taskService.getById(taskId);
+		if (!(taskEntity instanceof TaskEntity)) {
+			throw new BusinessException("Task not found.");
+		}
+
+		// set task state
+		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_CANCELLED);
+		if (taskStateDto == null) {
+			throw new BusinessException("Task state not found.");
+		}
+		TaskStateEntity taskStateEntity = new TaskStateEntity();
+		taskStateEntity.setId(taskStateDto.getId());
+		taskEntity.setTaskState(taskStateEntity);
+
+		try {
+
+			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
+			taskDto = entityParseDto(taskUpdatedEntity);
+
+		} catch (Exception e) {
+			throw new BusinessException("The task could not be updated.");
+		}
+
+		return taskDto;
+	}
+
+	public TaskDto removeUserFromTask(Long taskId, Long memberCode) throws BusinessException {
+
+		TaskDto taskDto = null;
+
+		// verify task exists
+		TaskEntity taskEntity = taskService.getById(taskId);
+		if (!(taskEntity instanceof TaskEntity)) {
+			throw new BusinessException("Task not found.");
+		}
+
+		// find member
+		List<TaskMemberEntity> taskMembers = taskEntity.getMembers();
+		TaskMemberEntity memberFound = taskMembers.stream()
+				.filter(memberEntity -> memberEntity.getMemberCode() == memberCode).findAny().orElse(null);
+		if (!(memberFound instanceof TaskMemberEntity)) {
+			throw new BusinessException("Task member not found.");
+		}
+
+		try {
+
+			taskMemberService.removeMemberById(memberFound.getId());
+			taskDto = this.getTaskById(taskId);
+
+		} catch (Exception e) {
+			throw new BusinessException("The task could not be updated.");
+		}
+
+		return taskDto;
+	}
+
+	public void addMemberToTask(TaskEntity taskEntity, Long memberCode) throws BusinessException {
+
+		// find member
+		List<TaskMemberEntity> taskMembers = taskEntity.getMembers();
+		TaskMemberEntity memberFound = taskMembers.stream()
+				.filter(memberEntity -> memberEntity.getMemberCode() == memberCode).findAny().orElse(null);
+		if (memberFound instanceof TaskMemberEntity) {
+			throw new BusinessException("The member has already registered in the task.");
+		}
+
+		try {
+
+			TaskMemberEntity taskMemberEntity = new TaskMemberEntity();
+			taskMemberEntity.setMemberCode(memberCode);
+			taskMemberEntity.setCreatedAt(new Date());
+			taskMemberEntity.setTask(taskEntity);
+
+			taskMemberService.addMemberToTask(taskMemberEntity);
+
+		} catch (Exception e) {
+			System.out.println("error add member: " + e.getMessage());
+			throw new BusinessException("The task could not be updated.");
+		}
+
 	}
 
 	public TaskDto entityParseDto(TaskEntity taskEntity) {

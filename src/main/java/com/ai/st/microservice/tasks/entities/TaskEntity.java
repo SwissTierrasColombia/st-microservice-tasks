@@ -51,7 +51,7 @@ public class TaskEntity {
 	@JoinColumn(name = "task_state_id", referencedColumnName = "id", nullable = false)
 	private TaskStateEntity taskState;
 
-	@OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+	@OneToMany(mappedBy = "task")
 	private List<TaskMemberEntity> members = new ArrayList<TaskMemberEntity>();
 
 	@OneToMany(mappedBy = "task", cascade = CascadeType.ALL)

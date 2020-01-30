@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ai.st.microservice.tasks.business.TaskBusiness;
+import com.ai.st.microservice.tasks.dto.BasicResponseDto;
 import com.ai.st.microservice.tasks.dto.CreateTaskDto;
 import com.ai.st.microservice.tasks.dto.ErrorDto;
 import com.ai.st.microservice.tasks.dto.TaskDto;
@@ -193,6 +195,59 @@ public class TaskV1Controller {
 		}
 
 		return new ResponseEntity<>(taskDtoResponse, httpStatus);
+	}
+	
+	@PutMapping("/{id}/cancel")
+	@ApiOperation(value = "Cancel task")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
+			@ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
+	public ResponseEntity<TaskDto> cancelTask(@PathVariable(required = true) Long id) {
+
+		HttpStatus httpStatus = null;
+		TaskDto taskDtoResponse = null;
+
+		try {
+
+			taskDtoResponse = taskBusiness.cancelTask(id);
+			httpStatus = HttpStatus.OK;
+
+		} catch (BusinessException e) {
+			log.error("Error TaskController@closeTask#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+		} catch (Exception e) {
+			log.error("Error TaskController@closeTask#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+		}
+
+		return new ResponseEntity<>(taskDtoResponse, httpStatus);
+	}
+
+	@DeleteMapping("/{taskId}/members/{memberId}/")
+	@ApiOperation(value = "Remove member from task")
+	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
+			@ApiResponse(code = 404, message = "Member removed"), @ApiResponse(code = 500, message = "Error Server") })
+	public ResponseEntity<?> removeMemberFromTask(@PathVariable(required = true) Long taskId,
+			@PathVariable(required = true) Long memberId) {
+
+		HttpStatus httpStatus = null;
+		Object responseDto = null;
+
+		try {
+
+			responseDto = taskBusiness.removeUserFromTask(taskId, memberId);
+			httpStatus = HttpStatus.OK;
+
+		} catch (BusinessException e) {
+			log.error("Error TaskController@removeMemberFromTask#Business ---> " + e.getMessage());
+			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+			responseDto = new BasicResponseDto(e.getMessage(), 2);
+		} catch (Exception e) {
+			log.error("Error TaskController@removeMemberFromTask#General ---> " + e.getMessage());
+			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+			responseDto = new BasicResponseDto(e.getMessage(), 1);
+		}
+
+		return new ResponseEntity<>(responseDto, httpStatus);
 	}
 
 }
