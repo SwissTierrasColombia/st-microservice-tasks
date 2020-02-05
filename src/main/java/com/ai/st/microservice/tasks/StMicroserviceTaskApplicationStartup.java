@@ -82,9 +82,15 @@ public class StMicroserviceTaskApplicationStartup implements ApplicationListener
 
 				TaskCategoryEntity categoryIntegration = new TaskCategoryEntity();
 				categoryIntegration.setId(TaskCategoryBusiness.TASK_CATEGORY_INTEGRATION);
-				categoryIntegration.setName("INTEGRACIÓN");
+				categoryIntegration.setName("INTEGRACIÓN DE INSUMOS");
 
 				taskCategoryService.createTaskCategory(categoryIntegration);
+
+				TaskCategoryEntity categoryGeneration = new TaskCategoryEntity();
+				categoryGeneration.setId(TaskCategoryBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION);
+				categoryGeneration.setName("GENERACIÓN INSUMO CATASTRAL");
+
+				taskCategoryService.createTaskCategory(categoryGeneration);
 
 				log.info("The domains 'categories' have been loaded!");
 			} catch (Exception e) {

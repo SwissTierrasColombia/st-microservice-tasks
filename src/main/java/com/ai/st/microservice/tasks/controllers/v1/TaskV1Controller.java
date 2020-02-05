@@ -48,13 +48,14 @@ public class TaskV1Controller {
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Get tasks", response = TaskDto.class),
 			@ApiResponse(code = 500, message = "Error Server") })
 	public ResponseEntity<List<TaskDto>> getAllTasks(@RequestParam(required = false, name = "member") Long memberCode,
-			@RequestParam(required = false, name = "states") List<Long> taskStates) {
+			@RequestParam(required = false, name = "states") List<Long> taskStates,
+			@RequestParam(required = false, name = "categories") List<Long> categories) {
 
 		HttpStatus httpStatus = null;
 		List<TaskDto> listTasks = new ArrayList<TaskDto>();
 
 		try {
-			listTasks = taskBusiness.getTasksByFilters(memberCode, taskStates);
+			listTasks = taskBusiness.getTasksByFilters(memberCode, taskStates, categories);
 
 			httpStatus = HttpStatus.OK;
 		} catch (Exception e) {
@@ -196,7 +197,7 @@ public class TaskV1Controller {
 
 		return new ResponseEntity<>(taskDtoResponse, httpStatus);
 	}
-	
+
 	@PutMapping("/{id}/cancel")
 	@ApiOperation(value = "Cancel task")
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),

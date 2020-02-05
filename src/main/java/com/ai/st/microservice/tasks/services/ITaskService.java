@@ -22,4 +22,13 @@ public interface ITaskService {
 
 	public Long getCount();
 
+	public List<TaskEntity> getTasksByStatesAndMemberAndCategories(List<Long> taskStates, List<Long> taskCategories,
+			Long memberCode);
+
+	public List<TaskEntity> getTasksByMemberAndCategories(List<Long> taskCategories, Long memberCode);
+
+	public List<TaskEntity> getTasksByStatesAndCategories(List<Long> taskCategories, List<Long> taskStates);
+
+	public List<TaskEntity> getTasksByCategories(List<Long> taskCategories);
+
 }

@@ -217,19 +217,53 @@ public class TaskBusiness {
 		return taskDto;
 	}
 
-	public List<TaskDto> getTasksByFilters(Long memberCode, List<Long> taskStates) {
+	public List<TaskDto> getTasksByFilters(Long memberCode, List<Long> taskStates, List<Long> taskCategories) {
 
 		List<TaskDto> listTasksDto = new ArrayList<TaskDto>();
 
 		List<TaskEntity> listTasksEntity = new ArrayList<TaskEntity>();
 
-		if (memberCode != null && taskStates != null && taskStates.size() > 0) {
+		if (memberCode != null && taskStates != null && taskStates.size() > 0 && taskCategories != null
+				&& taskCategories.size() > 0) {
+
+			// all filters
+			listTasksEntity = taskService.getTasksByStatesAndMemberAndCategories(taskStates, taskCategories,
+					memberCode);
+
+		} else if (memberCode != null && taskStates != null && taskStates.size() > 0) {
+
+			// filter by states and member
 			listTasksEntity = taskService.getTasksByStatesAndMember(taskStates, memberCode);
+
+		} else if (memberCode != null && taskCategories != null && taskCategories.size() > 0) {
+
+			// filter by categories and member
+			listTasksEntity = taskService.getTasksByMemberAndCategories(taskCategories, memberCode);
+
+		} else if (taskCategories != null && taskCategories.size() > 0 && taskStates != null
+				&& taskStates.size() > 0) {
+
+			// filter by categories and state
+			listTasksEntity = taskService.getTasksByStatesAndCategories(taskCategories, taskStates);
+
 		} else if (memberCode != null) {
+
+			// filter by member
 			listTasksEntity = taskService.getTasksByMember(memberCode);
+
 		} else if (taskStates != null && taskStates.size() > 0) {
+
+			// filter by states
 			listTasksEntity = taskService.getTasksByStates(taskStates);
+
+		} else if (taskCategories != null && taskCategories.size() > 0) {
+
+			// filter by categories
+			listTasksEntity = taskService.getTasksByCategories(taskCategories);
+
 		} else {
+
+			// no filters
 			listTasksEntity = taskService.getAllTasks();
 		}
 

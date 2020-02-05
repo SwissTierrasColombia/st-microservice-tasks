@@ -59,4 +59,25 @@ public class TaskService implements ITaskService {
 		return taskRepository.getTasksByMemberAndStates(memberCode, taskStates);
 	}
 
+	@Override
+	public List<TaskEntity> getTasksByStatesAndMemberAndCategories(List<Long> taskStates, List<Long> taskCategories,
+			Long memberCode) {
+		return taskRepository.getTasksByMemberAndStatesAndCategories(memberCode, taskStates, taskCategories);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByMemberAndCategories(List<Long> taskCategories, Long memberCode) {
+		return taskRepository.getTasksByMemberAndCategories(memberCode, taskCategories);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByStatesAndCategories(List<Long> taskCategories, List<Long> taskStates) {
+		return taskRepository.getTasksByStatesAndCategories(taskStates, taskCategories);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByCategories(List<Long> taskCategories) {
+		return taskRepository.getTasksByCategories(taskCategories);
+	}
+
 }
