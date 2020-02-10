@@ -32,8 +32,11 @@ public class TaskEntity {
 	@Column(name = "name", nullable = false, length = 255)
 	private String name;
 
-	@Column(name = "description", nullable = true, length = 255)
+	@Column(name = "description", nullable = true, length = 500)
 	private String description;
+
+	@Column(name = "reason", nullable = true, length = 500)
+	private String reason;
 
 	@Column(name = "deadline", nullable = true)
 	@Temporal(TemporalType.TIMESTAMP)
@@ -154,6 +157,14 @@ public class TaskEntity {
 
 	public void setSteps(List<TaskStepEntity> steps) {
 		this.steps = steps;
+	}
+
+	public String getReason() {
+		return reason;
+	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
 	}
 
 }

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.ai.st.microservice.tasks.business.TaskBusiness;
 import com.ai.st.microservice.tasks.dto.BasicResponseDto;
+import com.ai.st.microservice.tasks.dto.CancelTaskDto;
 import com.ai.st.microservice.tasks.dto.CreateTaskDto;
 import com.ai.st.microservice.tasks.dto.ErrorDto;
 import com.ai.st.microservice.tasks.dto.TaskDto;
@@ -202,14 +203,15 @@ public class TaskV1Controller {
 	@ApiOperation(value = "Cancel task")
 	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
 			@ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
-	public ResponseEntity<TaskDto> cancelTask(@PathVariable(required = true) Long id) {
+	public ResponseEntity<TaskDto> cancelTask(@PathVariable(required = true) Long id,
+			@RequestBody(required = true) CancelTaskDto cancelTaskRequest) {
 
 		HttpStatus httpStatus = null;
 		TaskDto taskDtoResponse = null;
 
 		try {
 
-			taskDtoResponse = taskBusiness.cancelTask(id);
+			taskDtoResponse = taskBusiness.cancelTask(id, cancelTaskRequest.getReason());
 			httpStatus = HttpStatus.OK;
 
 		} catch (BusinessException e) {

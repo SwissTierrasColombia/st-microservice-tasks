@@ -240,8 +240,7 @@ public class TaskBusiness {
 			// filter by categories and member
 			listTasksEntity = taskService.getTasksByMemberAndCategories(taskCategories, memberCode);
 
-		} else if (taskCategories != null && taskCategories.size() > 0 && taskStates != null
-				&& taskStates.size() > 0) {
+		} else if (taskCategories != null && taskCategories.size() > 0 && taskStates != null && taskStates.size() > 0) {
 
 			// filter by categories and state
 			listTasksEntity = taskService.getTasksByStatesAndCategories(taskCategories, taskStates);
@@ -340,7 +339,7 @@ public class TaskBusiness {
 		return taskDto;
 	}
 
-	public TaskDto cancelTask(Long taskId) throws BusinessException {
+	public TaskDto cancelTask(Long taskId, String reason) throws BusinessException {
 
 		TaskDto taskDto = null;
 
@@ -358,6 +357,7 @@ public class TaskBusiness {
 		TaskStateEntity taskStateEntity = new TaskStateEntity();
 		taskStateEntity.setId(taskStateDto.getId());
 		taskEntity.setTaskState(taskStateEntity);
+		taskEntity.setReason(reason);
 
 		try {
 
@@ -440,6 +440,7 @@ public class TaskBusiness {
 			taskDto.setCreatedAt(taskEntity.getCreatedAt());
 			taskDto.setDeadline(taskEntity.getDeadline());
 			taskDto.setClosingDate(taskEntity.getClosingDate());
+			taskDto.setReason(taskEntity.getReason());
 
 			// set state
 			TaskStateEntity taskStateEntity = taskEntity.getTaskState();

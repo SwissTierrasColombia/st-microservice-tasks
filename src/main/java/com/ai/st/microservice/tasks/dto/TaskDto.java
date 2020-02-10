@@ -22,6 +22,9 @@ public class TaskDto implements Serializable {
 	@ApiModelProperty(required = false, notes = "Description")
 	private String description;
 
+	@ApiModelProperty(required = false, notes = "Reason")
+	private String reason;
+
 	@ApiModelProperty(required = false, notes = "Deadline")
 	private Date deadline;
 
@@ -139,6 +142,14 @@ public class TaskDto implements Serializable {
 
 	public void setSteps(List<TaskStepDto> steps) {
 		this.steps = steps;
+	}
+
+	public String getReason() {
+		return reason;
+	}
+
+	public void setReason(String reason) {
+		this.reason = reason;
 	}
 
 }
