@@ -210,6 +210,7 @@ public class TaskBusiness {
 		TaskDto taskDto = null;
 
 		TaskEntity taskEntity = taskService.getById(id);
+
 		if (taskEntity instanceof TaskEntity) {
 			taskDto = entityParseDto(taskEntity);
 		}
@@ -299,7 +300,7 @@ public class TaskBusiness {
 		try {
 
 			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
-			taskDto = entityParseDto(taskUpdatedEntity);
+			taskDto = getTaskById(taskUpdatedEntity.getId());
 
 		} catch (Exception e) {
 			throw new BusinessException("The task could not be updated.");
@@ -330,7 +331,7 @@ public class TaskBusiness {
 		try {
 
 			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
-			taskDto = entityParseDto(taskUpdatedEntity);
+			taskDto = this.getTaskById(taskUpdatedEntity.getId());
 
 		} catch (Exception e) {
 			throw new BusinessException("The task could not be updated.");
@@ -362,7 +363,7 @@ public class TaskBusiness {
 		try {
 
 			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
-			taskDto = entityParseDto(taskUpdatedEntity);
+			taskDto = getTaskById(taskUpdatedEntity.getId());
 
 		} catch (Exception e) {
 			throw new BusinessException("The task could not be updated.");
@@ -421,7 +422,6 @@ public class TaskBusiness {
 			taskMemberService.addMemberToTask(taskMemberEntity);
 
 		} catch (Exception e) {
-			System.out.println("error add member: " + e.getMessage());
 			throw new BusinessException("The task could not be updated.");
 		}
 
@@ -444,7 +444,11 @@ public class TaskBusiness {
 
 			// set state
 			TaskStateEntity taskStateEntity = taskEntity.getTaskState();
-			taskDto.setTaskState(new TaskStateDto(taskStateEntity.getId(), taskStateEntity.getName()));
+			if (taskStateEntity.getName() == null) {
+				taskDto.setTaskState(taskStateBusiness.getById(taskStateEntity.getId()));
+			} else {
+				taskDto.setTaskState(new TaskStateDto(taskStateEntity.getId(), taskStateEntity.getName()));
+			}
 
 			// set members
 			for (TaskMemberEntity taskMemberEntity : taskEntity.getMembers()) {
