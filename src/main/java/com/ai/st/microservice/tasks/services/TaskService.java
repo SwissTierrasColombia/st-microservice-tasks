@@ -35,19 +35,8 @@ public class TaskService implements ITaskService {
 	}
 
 	@Override
-	@Transactional
-	public List<TaskEntity> getTasksByStateAndMember(Long taskStateId, Long memberCode) {
-		return taskRepository.getTasksByMemberAndState(memberCode, taskStateId);
-	}
-
-	@Override
 	public TaskEntity updateTask(TaskEntity task) {
 		return taskRepository.save(task);
-	}
-
-	@Override
-	public List<TaskEntity> getTasksByState(Long taskStateId) {
-		return taskRepository.getTasksByState(taskStateId);
 	}
 
 	@Override
@@ -58,6 +47,37 @@ public class TaskService implements ITaskService {
 	@Override
 	public Long getCount() {
 		return taskRepository.count();
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByStates(List<Long> taskStates) {
+		return taskRepository.getTasksByStates(taskStates);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByStatesAndMember(List<Long> taskStates, Long memberCode) {
+		return taskRepository.getTasksByMemberAndStates(memberCode, taskStates);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByStatesAndMemberAndCategories(List<Long> taskStates, List<Long> taskCategories,
+			Long memberCode) {
+		return taskRepository.getTasksByMemberAndStatesAndCategories(memberCode, taskStates, taskCategories);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByMemberAndCategories(List<Long> taskCategories, Long memberCode) {
+		return taskRepository.getTasksByMemberAndCategories(memberCode, taskCategories);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByStatesAndCategories(List<Long> taskCategories, List<Long> taskStates) {
+		return taskRepository.getTasksByStatesAndCategories(taskStates, taskCategories);
+	}
+
+	@Override
+	public List<TaskEntity> getTasksByCategories(List<Long> taskCategories) {
+		return taskRepository.getTasksByCategories(taskCategories);
 	}
 
 }

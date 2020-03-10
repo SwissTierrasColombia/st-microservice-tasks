@@ -21,7 +21,6 @@ public class TaskStateDto implements Serializable {
 	}
 
 	public TaskStateDto(Long id, String name) {
-		super();
 		this.id = id;
 		this.name = name;
 	}

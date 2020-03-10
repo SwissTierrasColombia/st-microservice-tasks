@@ -1,5 +1,9 @@
 package com.ai.st.microservice.tasks.entities;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -8,6 +12,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 @Entity
@@ -19,15 +24,15 @@ public class TaskMetadataEntity {
 	@Column(name = "id", nullable = false)
 	private Long id;
 
+	@Column(name = "key", nullable = false, length = 255)
+	private String key;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "task_id", referencedColumnName = "id", nullable = false)
 	private TaskEntity task;
 
-	@Column(name = "key", nullable = false, length = 255)
-	private String key;
-
-	@Column(name = "value", nullable = false, length = 255)
-	private String value;
+	@OneToMany(mappedBy = "metadata", cascade = CascadeType.ALL)
+	private List<MetadataPropertyEntity> properties = new ArrayList<MetadataPropertyEntity>();
 
 	public TaskMetadataEntity() {
 
@@ -57,12 +62,12 @@ public class TaskMetadataEntity {
 		this.key = key;
 	}
 
-	public String getValue() {
-		return value;
+	public List<MetadataPropertyEntity> getProperties() {
+		return properties;
 	}
 
-	public void setValue(String value) {
-		this.value = value;
+	public void setProperties(List<MetadataPropertyEntity> properties) {
+		this.properties = properties;
 	}
 
 }
