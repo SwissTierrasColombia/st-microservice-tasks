@@ -385,7 +385,7 @@ public class TaskBusiness {
 		// find member
 		List<TaskMemberEntity> taskMembers = taskEntity.getMembers();
 		TaskMemberEntity memberFound = taskMembers.stream()
-				.filter(memberEntity -> memberEntity.getMemberCode() == memberCode).findAny().orElse(null);
+				.filter(memberEntity -> memberEntity.getMemberCode().equals(memberCode)).findAny().orElse(null);
 		if (!(memberFound instanceof TaskMemberEntity)) {
 			throw new BusinessException("Task member not found.");
 		}
@@ -407,7 +407,7 @@ public class TaskBusiness {
 		// find member
 		List<TaskMemberEntity> taskMembers = taskEntity.getMembers();
 		TaskMemberEntity memberFound = taskMembers.stream()
-				.filter(memberEntity -> memberEntity.getMemberCode() == memberCode).findAny().orElse(null);
+				.filter(memberEntity -> memberEntity.getMemberCode().equals(memberCode)).findAny().orElse(null);
 		if (memberFound instanceof TaskMemberEntity) {
 			throw new BusinessException("The member has already registered in the task.");
 		}
