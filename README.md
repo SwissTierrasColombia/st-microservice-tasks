@@ -53,40 +53,6 @@ spring:
 
 See [http://localhost:6785/swagger-ui.html](http://localhost:6785/swagger-ui.html)
 
-## Running Production
-
-### Master Branch
-
-Go to the master branch
-
-```sh
-$ git checkout master
-```
-
-### Generate jar
-
-```sh
-$ mvn clean package -DskipTests
-```
-
-### Create Network Docker
-
-```sh
-$ docker network create st
-```
-
-### Create image from Dockerfile
-
-```sh
-$ docker build -t st-microservice-tasks:lynx .
-```
-
-### Run Container
-
-```sh
-$ docker run -P -t --network st -d st-microservice-tasks:lynx
-```
-
 ## License
 
 [Agencia de Implementación - BSF Swissphoto - INCIGE](https://github.com/AgenciaImplementacion/st-microservice-tasks/blob/master/LICENSE)
