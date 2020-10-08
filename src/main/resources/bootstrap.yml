@@ -2,7 +2,7 @@ spring:
   application:
     name: st-microservice-tasks
   profiles:
-    active: "production"
+    active: "develop"
   cloud:
     config:
       enabled: true
