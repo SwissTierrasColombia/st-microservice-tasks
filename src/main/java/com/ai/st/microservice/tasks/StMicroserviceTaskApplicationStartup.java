@@ -1,12 +1,5 @@
 package com.ai.st.microservice.tasks;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationListener;
-import org.springframework.context.event.ContextRefreshedEvent;
-import org.springframework.stereotype.Component;
-
 import com.ai.st.microservice.tasks.business.TaskCategoryBusiness;
 import com.ai.st.microservice.tasks.business.TaskStateBusiness;
 import com.ai.st.microservice.tasks.business.TaskTypeStepBusiness;
@@ -16,6 +9,12 @@ import com.ai.st.microservice.tasks.entities.TaskTypeStepEntity;
 import com.ai.st.microservice.tasks.services.ITaskCategoryService;
 import com.ai.st.microservice.tasks.services.ITaskStateService;
 import com.ai.st.microservice.tasks.services.ITaskTypeStepService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.stereotype.Component;
 
 @Component
 public class StMicroserviceTaskApplicationStartup implements ApplicationListener<ContextRefreshedEvent> {
@@ -83,14 +82,17 @@ public class StMicroserviceTaskApplicationStartup implements ApplicationListener
 				TaskCategoryEntity categoryIntegration = new TaskCategoryEntity();
 				categoryIntegration.setId(TaskCategoryBusiness.TASK_CATEGORY_INTEGRATION);
 				categoryIntegration.setName("INTEGRACIÓN DE INSUMOS");
-
 				taskCategoryService.createTaskCategory(categoryIntegration);
 
 				TaskCategoryEntity categoryGeneration = new TaskCategoryEntity();
 				categoryGeneration.setId(TaskCategoryBusiness.TASK_CATEGORY_CADASTRAL_INPUT_GENERATION);
 				categoryGeneration.setName("GENERACIÓN INSUMO CATASTRAL");
-
 				taskCategoryService.createTaskCategory(categoryGeneration);
+
+				TaskCategoryEntity categoryXTFQuality = new TaskCategoryEntity();
+				categoryXTFQuality.setId(TaskCategoryBusiness.TASK_CATEGORY_XTF_QUALITY_RULES);
+				categoryXTFQuality.setName("CONTROL DE CALIDAD XTF");
+				taskCategoryService.createTaskCategory(categoryXTFQuality);
 
 				log.info("The domains 'categories' have been loaded!");
 			} catch (Exception e) {
