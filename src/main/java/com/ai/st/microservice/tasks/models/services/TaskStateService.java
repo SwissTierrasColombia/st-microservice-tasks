@@ -1,4 +1,4 @@
-package com.ai.st.microservice.tasks.services;
+package com.ai.st.microservice.tasks.models.services;
 
 import javax.transaction.Transactional;
 
@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ai.st.microservice.tasks.entities.TaskStateEntity;
-import com.ai.st.microservice.tasks.repositories.TaskStateRepository;
+import com.ai.st.microservice.tasks.models.repositories.TaskStateRepository;
 
 @Service
 public class TaskStateService implements ITaskStateService {

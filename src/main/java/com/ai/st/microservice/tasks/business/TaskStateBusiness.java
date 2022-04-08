@@ -5,7 +5,7 @@ import org.springframework.stereotype.Component;
 
 import com.ai.st.microservice.tasks.dto.TaskStateDto;
 import com.ai.st.microservice.tasks.entities.TaskStateEntity;
-import com.ai.st.microservice.tasks.services.ITaskStateService;
+import com.ai.st.microservice.tasks.models.services.ITaskStateService;
 
 @Component
 public class TaskStateBusiness {
@@ -23,7 +23,7 @@ public class TaskStateBusiness {
         TaskStateDto taskStateDto = null;
 
         TaskStateEntity taskStateEntity = taskStateService.getById(id);
-        if (taskStateEntity instanceof TaskStateEntity) {
+        if (taskStateEntity != null) {
             taskStateDto = new TaskStateDto(taskStateEntity.getId(), taskStateEntity.getName());
         }
 

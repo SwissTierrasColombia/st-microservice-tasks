@@ -31,10 +31,10 @@ import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 import com.ai.st.microservice.tasks.entities.TaskStepEntity;
 import com.ai.st.microservice.tasks.entities.TaskTypeStepEntity;
 import com.ai.st.microservice.tasks.exceptions.BusinessException;
-import com.ai.st.microservice.tasks.services.ITaskMemberService;
-import com.ai.st.microservice.tasks.services.ITaskService;
-import com.ai.st.microservice.tasks.services.TaskCategoryService;
-import com.ai.st.microservice.tasks.services.TaskTypeStepService;
+import com.ai.st.microservice.tasks.models.services.ITaskMemberService;
+import com.ai.st.microservice.tasks.models.services.ITaskService;
+import com.ai.st.microservice.tasks.models.services.TaskCategoryService;
+import com.ai.st.microservice.tasks.models.services.TaskTypeStepService;
 
 @Component
 public class TaskBusiness {

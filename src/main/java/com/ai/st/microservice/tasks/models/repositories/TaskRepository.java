@@ -1,4 +1,4 @@
-package com.ai.st.microservice.tasks.repositories;
+package com.ai.st.microservice.tasks.models.repositories;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.ai.st.microservice.tasks.services;
+package com.ai.st.microservice.tasks.models.services;
 
 import java.util.List;
 
@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.ai.st.microservice.tasks.entities.TaskEntity;
-import com.ai.st.microservice.tasks.repositories.TaskRepository;
+import com.ai.st.microservice.tasks.models.repositories.TaskRepository;
 
 @Service
 public class TaskService implements ITaskService {
