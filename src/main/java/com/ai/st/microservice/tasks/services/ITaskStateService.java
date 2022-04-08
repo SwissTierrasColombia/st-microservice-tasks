@@ -4,10 +4,10 @@ import com.ai.st.microservice.tasks.entities.TaskStateEntity;
 
 public interface ITaskStateService {
 
-	public TaskStateEntity getById(Long id);
+    public TaskStateEntity getById(Long id);
 
-	public Long getAllCount();
+    public Long getAllCount();
 
-	public TaskStateEntity createTaskState(TaskStateEntity taskEntity);
+    public TaskStateEntity createTaskState(TaskStateEntity taskEntity);
 
 }

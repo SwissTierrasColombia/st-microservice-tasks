@@ -10,24 +10,24 @@ import com.ai.st.microservice.tasks.services.ITaskStateService;
 @Component
 public class TaskStateBusiness {
 
-	public static final Long TASK_STATE_ASSIGNED = (long) 1;
-	public static final Long TASK_STATE_CLOSED = (long) 2;
-	public static final Long TASK_STATE_CANCELLED = (long) 3;
-	public static final Long TASK_STATE_STARTED = (long) 4;
+    public static final Long TASK_STATE_ASSIGNED = (long) 1;
+    public static final Long TASK_STATE_CLOSED = (long) 2;
+    public static final Long TASK_STATE_CANCELLED = (long) 3;
+    public static final Long TASK_STATE_STARTED = (long) 4;
 
-	@Autowired
-	private ITaskStateService taskStateService;
+    @Autowired
+    private ITaskStateService taskStateService;
 
-	public TaskStateDto getById(Long id) {
+    public TaskStateDto getById(Long id) {
 
-		TaskStateDto taskStateDto = null;
+        TaskStateDto taskStateDto = null;
 
-		TaskStateEntity taskStateEntity = taskStateService.getById(id);
-		if (taskStateEntity instanceof TaskStateEntity) {
-			taskStateDto = new TaskStateDto(taskStateEntity.getId(), taskStateEntity.getName());
-		}
+        TaskStateEntity taskStateEntity = taskStateService.getById(id);
+        if (taskStateEntity instanceof TaskStateEntity) {
+            taskStateDto = new TaskStateDto(taskStateEntity.getId(), taskStateEntity.getName());
+        }
 
-		return taskStateDto;
-	}
+        return taskStateDto;
+    }
 
 }

@@ -11,23 +11,23 @@ import com.ai.st.microservice.tasks.repositories.TaskCategoryRepository;
 @Service
 public class TaskCategoryService implements ITaskCategoryService {
 
-	@Autowired
-	private TaskCategoryRepository taskCategoryRepository;
+    @Autowired
+    private TaskCategoryRepository taskCategoryRepository;
 
-	@Override
-	public TaskCategoryEntity getCategoryById(Long id) {
-		return taskCategoryRepository.findById(id).orElse(null);
-	}
+    @Override
+    public TaskCategoryEntity getCategoryById(Long id) {
+        return taskCategoryRepository.findById(id).orElse(null);
+    }
 
-	@Override
-	public Long getCount() {
-		return taskCategoryRepository.count();
-	}
+    @Override
+    public Long getCount() {
+        return taskCategoryRepository.count();
+    }
 
-	@Override
-	@Transactional
-	public TaskCategoryEntity createTaskCategory(TaskCategoryEntity categoryEntity) {
-		return taskCategoryRepository.save(categoryEntity);
-	}
+    @Override
+    @Transactional
+    public TaskCategoryEntity createTaskCategory(TaskCategoryEntity categoryEntity) {
+        return taskCategoryRepository.save(categoryEntity);
+    }
 
 }

@@ -24,147 +24,147 @@ import javax.persistence.TemporalType;
 @Table(name = "tasks", schema = "tasks")
 public class TaskEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-	@Column(name = "name", nullable = false, length = 255)
-	private String name;
+    @Column(name = "name", nullable = false, length = 255)
+    private String name;
 
-	@Column(name = "description", nullable = true, length = 500)
-	private String description;
+    @Column(name = "description", nullable = true, length = 500)
+    private String description;
 
-	@Column(name = "reason", nullable = true, length = 500)
-	private String reason;
+    @Column(name = "reason", nullable = true, length = 500)
+    private String reason;
 
-	@Column(name = "deadline", nullable = true)
-	@Temporal(TemporalType.TIMESTAMP)
-	private Date deadline;
+    @Column(name = "deadline", nullable = true)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date deadline;
 
-	@Column(name = "created_at", nullable = false)
-	@Temporal(TemporalType.TIMESTAMP)
-	private Date createdAt;
+    @Column(name = "created_at", nullable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
 
-	@Column(name = "closing_date", nullable = true)
-	@Temporal(TemporalType.TIMESTAMP)
-	private Date closingDate;
+    @Column(name = "closing_date", nullable = true)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date closingDate;
 
-	@OneToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "task_state_id", referencedColumnName = "id", nullable = false)
-	private TaskStateEntity taskState;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "task_state_id", referencedColumnName = "id", nullable = false)
+    private TaskStateEntity taskState;
 
-	@OneToMany(mappedBy = "task")
-	private List<TaskMemberEntity> members = new ArrayList<TaskMemberEntity>();
+    @OneToMany(mappedBy = "task")
+    private List<TaskMemberEntity> members = new ArrayList<TaskMemberEntity>();
 
-	@OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
-	private List<TaskMetadataEntity> metadata = new ArrayList<TaskMetadataEntity>();
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    private List<TaskMetadataEntity> metadata = new ArrayList<TaskMetadataEntity>();
 
-	@ManyToMany(fetch = FetchType.LAZY)
-	@JoinTable(schema = "tasks", name = "tasks_x_categories", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
-	List<TaskCategoryEntity> categories;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(schema = "tasks", name = "tasks_x_categories", joinColumns = @JoinColumn(name = "task_id"), inverseJoinColumns = @JoinColumn(name = "category_id"))
+    List<TaskCategoryEntity> categories;
 
-	@OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
-	private List<TaskStepEntity> steps = new ArrayList<TaskStepEntity>();
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL)
+    private List<TaskStepEntity> steps = new ArrayList<TaskStepEntity>();
 
-	public TaskEntity() {
+    public TaskEntity() {
 
-	}
+    }
 
-	public Long getId() {
-		return id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public String getDescription() {
-		return description;
-	}
+    public String getDescription() {
+        return description;
+    }
 
-	public void setDescription(String description) {
-		this.description = description;
-	}
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-	public Date getDeadline() {
-		return deadline;
-	}
+    public Date getDeadline() {
+        return deadline;
+    }
 
-	public void setDeadline(Date deadline) {
-		this.deadline = deadline;
-	}
+    public void setDeadline(Date deadline) {
+        this.deadline = deadline;
+    }
 
-	public Date getCreatedAt() {
-		return createdAt;
-	}
+    public Date getCreatedAt() {
+        return createdAt;
+    }
 
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
 
-	public Date getClosingDate() {
-		return closingDate;
-	}
+    public Date getClosingDate() {
+        return closingDate;
+    }
 
-	public void setClosingDate(Date closingDate) {
-		this.closingDate = closingDate;
-	}
+    public void setClosingDate(Date closingDate) {
+        this.closingDate = closingDate;
+    }
 
-	public TaskStateEntity getTaskState() {
-		return taskState;
-	}
+    public TaskStateEntity getTaskState() {
+        return taskState;
+    }
 
-	public void setTaskState(TaskStateEntity taskState) {
-		this.taskState = taskState;
-	}
+    public void setTaskState(TaskStateEntity taskState) {
+        this.taskState = taskState;
+    }
 
-	public List<TaskCategoryEntity> getCategories() {
-		return categories;
-	}
+    public List<TaskCategoryEntity> getCategories() {
+        return categories;
+    }
 
-	public void setCategories(List<TaskCategoryEntity> categories) {
-		this.categories = categories;
-	}
+    public void setCategories(List<TaskCategoryEntity> categories) {
+        this.categories = categories;
+    }
 
-	public List<TaskMemberEntity> getMembers() {
-		return members;
-	}
+    public List<TaskMemberEntity> getMembers() {
+        return members;
+    }
 
-	public void setMembers(List<TaskMemberEntity> members) {
-		this.members = members;
-	}
+    public void setMembers(List<TaskMemberEntity> members) {
+        this.members = members;
+    }
 
-	public List<TaskMetadataEntity> getMetadata() {
-		return metadata;
-	}
+    public List<TaskMetadataEntity> getMetadata() {
+        return metadata;
+    }
 
-	public void setMetadata(List<TaskMetadataEntity> metadata) {
-		this.metadata = metadata;
-	}
+    public void setMetadata(List<TaskMetadataEntity> metadata) {
+        this.metadata = metadata;
+    }
 
-	public List<TaskStepEntity> getSteps() {
-		return steps;
-	}
+    public List<TaskStepEntity> getSteps() {
+        return steps;
+    }
 
-	public void setSteps(List<TaskStepEntity> steps) {
-		this.steps = steps;
-	}
+    public void setSteps(List<TaskStepEntity> steps) {
+        this.steps = steps;
+    }
 
-	public String getReason() {
-		return reason;
-	}
+    public String getReason() {
+        return reason;
+    }
 
-	public void setReason(String reason) {
-		this.reason = reason;
-	}
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
 
 }

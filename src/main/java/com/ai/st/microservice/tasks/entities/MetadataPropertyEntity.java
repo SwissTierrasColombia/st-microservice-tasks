@@ -14,55 +14,55 @@ import javax.persistence.Table;
 @Table(name = "tasks_metadata_properties", schema = "tasks")
 public class MetadataPropertyEntity {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	@Column(name = "id", nullable = false)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false)
+    private Long id;
 
-	@Column(name = "key", nullable = false, length = 255)
-	private String key;
+    @Column(name = "key", nullable = false, length = 255)
+    private String key;
 
-	@Column(name = "value", nullable = false, length = 255)
-	private String value;
+    @Column(name = "value", nullable = false, length = 255)
+    private String value;
 
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "metadata_id", referencedColumnName = "id", nullable = false)
-	private TaskMetadataEntity metadata;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "metadata_id", referencedColumnName = "id", nullable = false)
+    private TaskMetadataEntity metadata;
 
-	public MetadataPropertyEntity() {
+    public MetadataPropertyEntity() {
 
-	}
+    }
 
-	public Long getId() {
-		return id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public String getKey() {
-		return key;
-	}
+    public String getKey() {
+        return key;
+    }
 
-	public void setKey(String key) {
-		this.key = key;
-	}
+    public void setKey(String key) {
+        this.key = key;
+    }
 
-	public String getValue() {
-		return value;
-	}
+    public String getValue() {
+        return value;
+    }
 
-	public void setValue(String value) {
-		this.value = value;
-	}
+    public void setValue(String value) {
+        this.value = value;
+    }
 
-	public TaskMetadataEntity getMetadata() {
-		return metadata;
-	}
+    public TaskMetadataEntity getMetadata() {
+        return metadata;
+    }
 
-	public void setMetadata(TaskMetadataEntity metadata) {
-		this.metadata = metadata;
-	}
+    public void setMetadata(TaskMetadataEntity metadata) {
+        this.metadata = metadata;
+    }
 
 }

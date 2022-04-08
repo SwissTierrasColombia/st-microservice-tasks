@@ -4,10 +4,10 @@ import com.ai.st.microservice.tasks.entities.TaskTypeStepEntity;
 
 public interface ITaskTypeStepService {
 
-	public Long getCount();
+    public Long getCount();
 
-	public TaskTypeStepEntity createTypeStep(TaskTypeStepEntity typeStepEntity);
+    public TaskTypeStepEntity createTypeStep(TaskTypeStepEntity typeStepEntity);
 
-	public TaskTypeStepEntity getTypeStepById(Long id);
+    public TaskTypeStepEntity getTypeStepById(Long id);
 
 }

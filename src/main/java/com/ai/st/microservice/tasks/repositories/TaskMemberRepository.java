@@ -5,8 +5,7 @@ import org.springframework.data.repository.CrudRepository;
 import com.ai.st.microservice.tasks.entities.TaskMemberEntity;
 
 public interface TaskMemberRepository extends CrudRepository<TaskMemberEntity, Long> {
-	
-	Long deleteByMemberCode(Long memberCode);
-	
+
+    Long deleteByMemberCode(Long memberCode);
 
 }

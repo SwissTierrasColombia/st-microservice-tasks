@@ -11,23 +11,23 @@ import com.ai.st.microservice.tasks.repositories.TaskTypeStepRepository;
 @Service
 public class TaskTypeStepService implements ITaskTypeStepService {
 
-	@Autowired
-	private TaskTypeStepRepository typeStepRepository;
+    @Autowired
+    private TaskTypeStepRepository typeStepRepository;
 
-	@Override
-	public Long getCount() {
-		return typeStepRepository.count();
-	}
+    @Override
+    public Long getCount() {
+        return typeStepRepository.count();
+    }
 
-	@Override
-	@Transactional
-	public TaskTypeStepEntity createTypeStep(TaskTypeStepEntity typeStepEntity) {
-		return typeStepRepository.save(typeStepEntity);
-	}
+    @Override
+    @Transactional
+    public TaskTypeStepEntity createTypeStep(TaskTypeStepEntity typeStepEntity) {
+        return typeStepRepository.save(typeStepEntity);
+    }
 
-	@Override
-	public TaskTypeStepEntity getTypeStepById(Long id) {
-		return typeStepRepository.findById(id).orElse(null);
-	}
+    @Override
+    public TaskTypeStepEntity getTypeStepById(Long id) {
+        return typeStepRepository.findById(id).orElse(null);
+    }
 
 }

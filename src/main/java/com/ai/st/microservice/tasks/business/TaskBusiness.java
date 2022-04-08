@@ -5,6 +5,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.ai.st.microservice.tasks.services.tracing.SCMTracing;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -36,467 +39,489 @@ import com.ai.st.microservice.tasks.services.TaskTypeStepService;
 @Component
 public class TaskBusiness {
 
-	@Autowired
-	private ITaskService taskService;
-
-	@Autowired
-	private TaskStateBusiness taskStateBusiness;
-
-	@Autowired
-	private TaskCategoryService taskCategoryService;
-
-	@Autowired
-	private TaskTypeStepService taskTypeStepService;
-
-	@Autowired
-	private ITaskMemberService taskMemberService;
-
-	public List<TaskDto> getAllTasks() {
-
-		List<TaskDto> listTasksDto = new ArrayList<TaskDto>();
-
-		List<TaskEntity> listTasksEntity = taskService.getAllTasks();
-		for (TaskEntity taskEntity : listTasksEntity) {
-			TaskDto taskDto = entityParseDto(taskEntity);
-			listTasksDto.add(taskDto);
-		}
-
-		return listTasksDto;
-	}
-
-	public TaskDto createTask(String name, String description, List<Long> users, Date deadline, List<Long> categories,
-			List<CreateTaskMetadataDto> metadata, List<CreateTaskStepDto> steps) throws BusinessException {
-
-		TaskDto taskDto = null;
-
-		Date currentDate = new Date();
-
-		// validate if the deadline is greater than the current date
-		if (deadline != null) {
-			if (!deadline.after(currentDate)) {
-				throw new BusinessException("The deadline must be greater than the current date.");
-			}
-		}
-
-		// set task state
-		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_ASSIGNED);
-		if (taskStateDto == null) {
-			throw new BusinessException("Task state not found.");
-		}
-
-		List<Long> listUsers = users.stream().distinct().collect(Collectors.toList());
-		List<Long> listCategories = categories.stream().distinct().collect(Collectors.toList());
-
-		// validate categories
-		for (Long categoryId : listCategories) {
-			TaskCategoryEntity categoryEntity = taskCategoryService.getCategoryById(categoryId);
-			if (!(categoryEntity instanceof TaskCategoryEntity)) {
-				throw new BusinessException("No se ha encontrado la cagegoría.");
-			}
-		}
-
-		// validate metadata
-		if (metadata.size() > 0) {
-			for (CreateTaskMetadataDto meta : metadata) {
-				if (meta.getKey().isEmpty() || meta.getKey() == null) {
-					throw new BusinessException("Metadato inválido.");
-				}
-				if (meta.getProperties().size() == 0) {
-					throw new BusinessException("El metadato debe tener al menos una propiedad.");
-				}
-			}
-		}
-
-		// validate steps
-		if (steps.size() > 0) {
-			for (CreateTaskStepDto stepDto : steps) {
-				if (stepDto.getTitle().isEmpty() || stepDto.getTitle() == null) {
-					throw new BusinessException("El título del paso es requerido.");
-				}
-				if (stepDto.getDescription().isEmpty() || stepDto.getDescription() == null) {
-					throw new BusinessException("La descripción del paso es requerido.");
-				}
-				if (stepDto.getTypeStepId() == null) {
-					throw new BusinessException("La tipo de paso es requerido.");
-				}
-				TaskTypeStepEntity typeStepEntity = taskTypeStepService.getTypeStepById(stepDto.getTypeStepId());
-				if (!(typeStepEntity instanceof TaskTypeStepEntity)) {
-					throw new BusinessException("La tipo de paso no existe.");
-				}
-			}
-		}
-
-		try {
-			TaskEntity taskEntity = new TaskEntity();
-			taskEntity.setName(name);
-			taskEntity.setDescription(description);
-			taskEntity.setDeadline(deadline);
-			taskEntity.setCreatedAt(currentDate);
-
-			TaskStateEntity taskStateEntity = new TaskStateEntity();
-			taskStateEntity.setId(taskStateDto.getId());
-			taskEntity.setTaskState(taskStateEntity);
-
-			// set categories
-			List<TaskCategoryEntity> categoriesEntity = new ArrayList<TaskCategoryEntity>();
-			for (Long categoryId : listCategories) {
-				TaskCategoryEntity category = new TaskCategoryEntity();
-				category.setId(categoryId);
-				categoriesEntity.add(category);
-			}
-			taskEntity.setCategories(categoriesEntity);
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
+
+    @Autowired
+    private ITaskService taskService;
+
+    @Autowired
+    private TaskStateBusiness taskStateBusiness;
+
+    @Autowired
+    private TaskCategoryService taskCategoryService;
+
+    @Autowired
+    private TaskTypeStepService taskTypeStepService;
+
+    @Autowired
+    private ITaskMemberService taskMemberService;
+
+    public List<TaskDto> getAllTasks() {
+
+        List<TaskDto> listTasksDto = new ArrayList<>();
+
+        List<TaskEntity> listTasksEntity = taskService.getAllTasks();
+        for (TaskEntity taskEntity : listTasksEntity) {
+            TaskDto taskDto = entityParseDto(taskEntity);
+            listTasksDto.add(taskDto);
+        }
+
+        return listTasksDto;
+    }
+
+    public TaskDto createTask(String name, String description, List<Long> users, Date deadline, List<Long> categories,
+            List<CreateTaskMetadataDto> metadata, List<CreateTaskStepDto> steps) throws BusinessException {
+
+        TaskDto taskDto;
+
+        Date currentDate = new Date();
+
+        // validate if the deadline is greater than the current date
+        if (deadline != null) {
+            if (!deadline.after(currentDate)) {
+                throw new BusinessException("La fecha límite debe ser mayor a la fecha actual");
+            }
+        }
+
+        // set task state
+        TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_ASSIGNED);
+        if (taskStateDto == null) {
+            throw new BusinessException("No se ha encontrado el estado de la tarea.");
+        }
+
+        List<Long> listUsers = users.stream().distinct().collect(Collectors.toList());
+        List<Long> listCategories = categories.stream().distinct().collect(Collectors.toList());
+
+        // validate categories
+        for (Long categoryId : listCategories) {
+            TaskCategoryEntity categoryEntity = taskCategoryService.getCategoryById(categoryId);
+            if (categoryEntity == null) {
+                throw new BusinessException("No se ha encontrado la cagegoría.");
+            }
+        }
+
+        // validate metadata
+        if (metadata.size() > 0) {
+            for (CreateTaskMetadataDto meta : metadata) {
+                if (meta.getKey().isEmpty() || meta.getKey() == null) {
+                    throw new BusinessException("Metadato inválido.");
+                }
+                if (meta.getProperties().size() == 0) {
+                    throw new BusinessException("El metadato debe tener al menos una propiedad.");
+                }
+            }
+        }
+
+        // validate steps
+        if (steps.size() > 0) {
+            for (CreateTaskStepDto stepDto : steps) {
+                if (stepDto.getTitle().isEmpty() || stepDto.getTitle() == null) {
+                    throw new BusinessException("El título del paso es requerido.");
+                }
+                if (stepDto.getDescription().isEmpty() || stepDto.getDescription() == null) {
+                    throw new BusinessException("La descripción del paso es requerido.");
+                }
+                if (stepDto.getTypeStepId() == null) {
+                    throw new BusinessException("La tipo de paso es requerido.");
+                }
+                TaskTypeStepEntity typeStepEntity = taskTypeStepService.getTypeStepById(stepDto.getTypeStepId());
+                if (typeStepEntity == null) {
+                    throw new BusinessException("La tipo de paso no existe.");
+                }
+            }
+        }
+
+        try {
+            TaskEntity taskEntity = new TaskEntity();
+            taskEntity.setName(name);
+            taskEntity.setDescription(description);
+            taskEntity.setDeadline(deadline);
+            taskEntity.setCreatedAt(currentDate);
+
+            TaskStateEntity taskStateEntity = new TaskStateEntity();
+            taskStateEntity.setId(taskStateDto.getId());
+            taskEntity.setTaskState(taskStateEntity);
 
-			// set metadata
-			if (metadata.size() > 0) {
-				List<TaskMetadataEntity> listMetadataEntity = new ArrayList<TaskMetadataEntity>();
-				for (CreateTaskMetadataDto meta : metadata) {
-					TaskMetadataEntity metadataEntity = new TaskMetadataEntity();
-					metadataEntity.setKey(meta.getKey());
-					metadataEntity.setTask(taskEntity);
+            // set categories
+            List<TaskCategoryEntity> categoriesEntity = new ArrayList<>();
+            for (Long categoryId : listCategories) {
+                TaskCategoryEntity category = new TaskCategoryEntity();
+                category.setId(categoryId);
+                categoriesEntity.add(category);
+            }
+            taskEntity.setCategories(categoriesEntity);
 
-					// set properties
-					List<MetadataPropertyEntity> propertiesEntity = new ArrayList<>();
-					for (CreateTaskPropertyDto propertyDto : meta.getProperties()) {
-						MetadataPropertyEntity propertyEntity = new MetadataPropertyEntity();
-						propertyEntity.setKey(propertyDto.getKey());
-						propertyEntity.setValue(propertyDto.getValue());
-						propertyEntity.setMetadata(metadataEntity);
-						propertiesEntity.add(propertyEntity);
-					}
+            // set metadata
+            if (metadata.size() > 0) {
+                List<TaskMetadataEntity> listMetadataEntity = new ArrayList<>();
+                for (CreateTaskMetadataDto meta : metadata) {
+                    TaskMetadataEntity metadataEntity = new TaskMetadataEntity();
+                    metadataEntity.setKey(meta.getKey());
+                    metadataEntity.setTask(taskEntity);
 
-					metadataEntity.setProperties(propertiesEntity);
+                    // set properties
+                    List<MetadataPropertyEntity> propertiesEntity = new ArrayList<>();
+                    for (CreateTaskPropertyDto propertyDto : meta.getProperties()) {
+                        MetadataPropertyEntity propertyEntity = new MetadataPropertyEntity();
+                        propertyEntity.setKey(propertyDto.getKey());
+                        propertyEntity.setValue(propertyDto.getValue());
+                        propertyEntity.setMetadata(metadataEntity);
+                        propertiesEntity.add(propertyEntity);
+                    }
 
-					listMetadataEntity.add(metadataEntity);
-				}
-				taskEntity.setMetadata(listMetadataEntity);
-			}
+                    metadataEntity.setProperties(propertiesEntity);
 
-			if (steps.size() > 0) {
+                    listMetadataEntity.add(metadataEntity);
+                }
+                taskEntity.setMetadata(listMetadataEntity);
+            }
 
-				List<TaskStepEntity> listStepsEntity = new ArrayList<>();
-				for (CreateTaskStepDto stepDto : steps) {
+            if (steps.size() > 0) {
 
-					TaskStepEntity stepEntity = new TaskStepEntity();
-					stepEntity.setCode("N/A");
-					stepEntity.setDescription(stepDto.getDescription());
-					stepEntity.setStatus(false);
-					stepEntity.setTask(taskEntity);
-					TaskTypeStepEntity typeStepEntity = taskTypeStepService.getTypeStepById(stepDto.getTypeStepId());
-					stepEntity.setTypeStep(typeStepEntity);
+                List<TaskStepEntity> listStepsEntity = new ArrayList<>();
+                for (CreateTaskStepDto stepDto : steps) {
 
-					listStepsEntity.add(stepEntity);
-				}
+                    TaskStepEntity stepEntity = new TaskStepEntity();
+                    stepEntity.setCode("N/A");
+                    stepEntity.setDescription(stepDto.getDescription());
+                    stepEntity.setStatus(false);
+                    stepEntity.setTask(taskEntity);
+                    TaskTypeStepEntity typeStepEntity = taskTypeStepService.getTypeStepById(stepDto.getTypeStepId());
+                    stepEntity.setTypeStep(typeStepEntity);
 
-				taskEntity.setSteps(listStepsEntity);
-			}
+                    listStepsEntity.add(stepEntity);
+                }
 
-			TaskEntity newTaskEntity = taskService.createTask(taskEntity);
+                taskEntity.setSteps(listStepsEntity);
+            }
 
-			for (Long userCode : listUsers) {
-				this.addMemberToTask(newTaskEntity, userCode);
-			}
+            TaskEntity newTaskEntity = taskService.createTask(taskEntity);
 
-			taskDto = this.getTaskById(newTaskEntity.getId());
+            for (Long userCode : listUsers) {
+                this.addMemberToTask(newTaskEntity, userCode);
+            }
 
-		} catch (Exception e) {
-			throw new BusinessException("The task could not be created.: " + e.getMessage());
-		}
+            taskDto = this.getTaskById(newTaskEntity.getId());
 
-		return taskDto;
-	}
+        } catch (Exception e) {
+            String messageError = String.format("Error creando tarea: %s", e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido crear la tarea");
+        }
 
-	public TaskDto getTaskById(Long id) {
+        return taskDto;
+    }
 
-		TaskDto taskDto = null;
+    public TaskDto getTaskById(Long id) {
 
-		TaskEntity taskEntity = taskService.getById(id);
+        TaskDto taskDto = null;
 
-		if (taskEntity instanceof TaskEntity) {
-			taskDto = entityParseDto(taskEntity);
-		}
+        TaskEntity taskEntity = taskService.getById(id);
 
-		return taskDto;
-	}
+        if (taskEntity != null) {
+            taskDto = entityParseDto(taskEntity);
+        }
 
-	public List<TaskDto> getTasksByFilters(Long memberCode, List<Long> taskStates, List<Long> taskCategories) {
+        return taskDto;
+    }
 
-		List<TaskDto> listTasksDto = new ArrayList<TaskDto>();
+    public List<TaskDto> getTasksByFilters(Long memberCode, List<Long> taskStates, List<Long> taskCategories) {
 
-		List<TaskEntity> listTasksEntity = new ArrayList<TaskEntity>();
+        List<TaskDto> listTasksDto = new ArrayList<>();
 
-		if (memberCode != null && taskStates != null && taskStates.size() > 0 && taskCategories != null
-				&& taskCategories.size() > 0) {
+        List<TaskEntity> listTasksEntity;
 
-			// all filters
-			listTasksEntity = taskService.getTasksByStatesAndMemberAndCategories(taskStates, taskCategories,
-					memberCode);
+        if (memberCode != null && taskStates != null && taskStates.size() > 0 && taskCategories != null
+                && taskCategories.size() > 0) {
 
-		} else if (memberCode != null && taskStates != null && taskStates.size() > 0) {
+            // all filters
+            listTasksEntity = taskService.getTasksByStatesAndMemberAndCategories(taskStates, taskCategories,
+                    memberCode);
 
-			// filter by states and member
-			listTasksEntity = taskService.getTasksByStatesAndMember(taskStates, memberCode);
+        } else if (memberCode != null && taskStates != null && taskStates.size() > 0) {
 
-		} else if (memberCode != null && taskCategories != null && taskCategories.size() > 0) {
+            // filter by states and member
+            listTasksEntity = taskService.getTasksByStatesAndMember(taskStates, memberCode);
 
-			// filter by categories and member
-			listTasksEntity = taskService.getTasksByMemberAndCategories(taskCategories, memberCode);
+        } else if (memberCode != null && taskCategories != null && taskCategories.size() > 0) {
 
-		} else if (taskCategories != null && taskCategories.size() > 0 && taskStates != null && taskStates.size() > 0) {
+            // filter by categories and member
+            listTasksEntity = taskService.getTasksByMemberAndCategories(taskCategories, memberCode);
 
-			// filter by categories and state
-			listTasksEntity = taskService.getTasksByStatesAndCategories(taskCategories, taskStates);
+        } else if (taskCategories != null && taskCategories.size() > 0 && taskStates != null && taskStates.size() > 0) {
 
-		} else if (memberCode != null) {
+            // filter by categories and state
+            listTasksEntity = taskService.getTasksByStatesAndCategories(taskCategories, taskStates);
 
-			// filter by member
-			listTasksEntity = taskService.getTasksByMember(memberCode);
+        } else if (memberCode != null) {
 
-		} else if (taskStates != null && taskStates.size() > 0) {
+            // filter by member
+            listTasksEntity = taskService.getTasksByMember(memberCode);
 
-			// filter by states
-			listTasksEntity = taskService.getTasksByStates(taskStates);
+        } else if (taskStates != null && taskStates.size() > 0) {
 
-		} else if (taskCategories != null && taskCategories.size() > 0) {
+            // filter by states
+            listTasksEntity = taskService.getTasksByStates(taskStates);
 
-			// filter by categories
-			listTasksEntity = taskService.getTasksByCategories(taskCategories);
+        } else if (taskCategories != null && taskCategories.size() > 0) {
 
-		} else {
+            // filter by categories
+            listTasksEntity = taskService.getTasksByCategories(taskCategories);
 
-			// no filters
-			listTasksEntity = taskService.getAllTasks();
-		}
+        } else {
 
-		for (TaskEntity taskEntity : listTasksEntity) {
-			TaskDto taskDto = entityParseDto(taskEntity);
-			listTasksDto.add(taskDto);
-		}
+            // no filters
+            listTasksEntity = taskService.getAllTasks();
+        }
 
-		return listTasksDto;
-	}
+        for (TaskEntity taskEntity : listTasksEntity) {
+            TaskDto taskDto = entityParseDto(taskEntity);
+            listTasksDto.add(taskDto);
+        }
 
-	public TaskDto closeTask(Long taskId) throws BusinessException {
+        return listTasksDto;
+    }
 
-		TaskDto taskDto = null;
+    public TaskDto closeTask(Long taskId) throws BusinessException {
 
-		// verify task exists
-		TaskEntity taskEntity = taskService.getById(taskId);
-		if (!(taskEntity instanceof TaskEntity)) {
-			throw new BusinessException("Task not found.");
-		}
+        TaskDto taskDto;
 
-		Date currentDate = new Date();
-		taskEntity.setClosingDate(currentDate);
+        // verify task exists
+        TaskEntity taskEntity = taskService.getById(taskId);
+        if (taskEntity == null) {
+            throw new BusinessException("No se ha encontrado la tarea");
+        }
 
-		// set task state
-		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_CLOSED);
-		if (taskStateDto == null) {
-			throw new BusinessException("Task state not found.");
-		}
-		TaskStateEntity taskStateEntity = new TaskStateEntity();
-		taskStateEntity.setId(taskStateDto.getId());
-		taskEntity.setTaskState(taskStateEntity);
+        Date currentDate = new Date();
+        taskEntity.setClosingDate(currentDate);
 
-		try {
+        // set task state
+        TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_CLOSED);
+        if (taskStateDto == null) {
+            throw new BusinessException("No se ha encontrado el estado de tarea");
+        }
+        TaskStateEntity taskStateEntity = new TaskStateEntity();
+        taskStateEntity.setId(taskStateDto.getId());
+        taskEntity.setTaskState(taskStateEntity);
 
-			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
-			taskDto = getTaskById(taskUpdatedEntity.getId());
+        try {
 
-		} catch (Exception e) {
-			throw new BusinessException("The task could not be updated.");
-		}
+            TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
+            taskDto = getTaskById(taskUpdatedEntity.getId());
 
-		return taskDto;
-	}
+        } catch (Exception e) {
+            String messageError = String.format("Error cerrando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido cerrar la tarea.");
+        }
 
-	public TaskDto startTask(Long taskId) throws BusinessException {
+        return taskDto;
+    }
 
-		TaskDto taskDto = null;
+    public TaskDto startTask(Long taskId) throws BusinessException {
 
-		// verify task exists
-		TaskEntity taskEntity = taskService.getById(taskId);
-		if (!(taskEntity instanceof TaskEntity)) {
-			throw new BusinessException("Task not found.");
-		}
+        TaskDto taskDto;
 
-		// set task state
-		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_STARTED);
-		if (taskStateDto == null) {
-			throw new BusinessException("Task state not found.");
-		}
-		TaskStateEntity taskStateEntity = new TaskStateEntity();
-		taskStateEntity.setId(taskStateDto.getId());
-		taskEntity.setTaskState(taskStateEntity);
+        // verify task exists
+        TaskEntity taskEntity = taskService.getById(taskId);
+        if (taskEntity == null) {
+            throw new BusinessException("No se ha encontrado la tarea");
+        }
 
-		try {
+        // set task state
+        TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_STARTED);
+        if (taskStateDto == null) {
+            throw new BusinessException("No se ha encontrado el estado de tarea");
+        }
+        TaskStateEntity taskStateEntity = new TaskStateEntity();
+        taskStateEntity.setId(taskStateDto.getId());
+        taskEntity.setTaskState(taskStateEntity);
 
-			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
-			taskDto = this.getTaskById(taskUpdatedEntity.getId());
+        try {
 
-		} catch (Exception e) {
-			throw new BusinessException("The task could not be updated.");
-		}
+            TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
+            taskDto = this.getTaskById(taskUpdatedEntity.getId());
 
-		return taskDto;
-	}
+        } catch (Exception e) {
+            String messageError = String.format("Error iniciando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido iniciar la tarea.");
+        }
 
-	public TaskDto cancelTask(Long taskId, String reason) throws BusinessException {
+        return taskDto;
+    }
 
-		TaskDto taskDto = null;
+    public TaskDto cancelTask(Long taskId, String reason) throws BusinessException {
 
-		// verify task exists
-		TaskEntity taskEntity = taskService.getById(taskId);
-		if (!(taskEntity instanceof TaskEntity)) {
-			throw new BusinessException("Task not found.");
-		}
+        TaskDto taskDto;
 
-		// set task state
-		TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_CANCELLED);
-		if (taskStateDto == null) {
-			throw new BusinessException("Task state not found.");
-		}
-		TaskStateEntity taskStateEntity = new TaskStateEntity();
-		taskStateEntity.setId(taskStateDto.getId());
-		taskEntity.setTaskState(taskStateEntity);
-		taskEntity.setReason(reason);
+        // verify task exists
+        TaskEntity taskEntity = taskService.getById(taskId);
+        if (taskEntity == null) {
+            throw new BusinessException("No se ha encontrado la tarea");
+        }
 
-		try {
+        // set task state
+        TaskStateDto taskStateDto = taskStateBusiness.getById(TaskStateBusiness.TASK_STATE_CANCELLED);
+        if (taskStateDto == null) {
+            throw new BusinessException("No se ha encontrado el estado de tarea");
+        }
+        TaskStateEntity taskStateEntity = new TaskStateEntity();
+        taskStateEntity.setId(taskStateDto.getId());
+        taskEntity.setTaskState(taskStateEntity);
+        taskEntity.setReason(reason);
 
-			TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
-			taskDto = getTaskById(taskUpdatedEntity.getId());
+        try {
 
-		} catch (Exception e) {
-			throw new BusinessException("The task could not be updated.");
-		}
+            TaskEntity taskUpdatedEntity = taskService.updateTask(taskEntity);
+            taskDto = getTaskById(taskUpdatedEntity.getId());
 
-		return taskDto;
-	}
+        } catch (Exception e) {
+            String messageError = String.format("Error cancelando la tarea %d: %s", taskId, e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido cancelar la tarea.");
+        }
 
-	public TaskDto removeUserFromTask(Long taskId, Long memberCode) throws BusinessException {
+        return taskDto;
+    }
 
-		TaskDto taskDto = null;
+    public TaskDto removeUserFromTask(Long taskId, Long memberCode) throws BusinessException {
 
-		// verify task exists
-		TaskEntity taskEntity = taskService.getById(taskId);
-		if (!(taskEntity instanceof TaskEntity)) {
-			throw new BusinessException("Task not found.");
-		}
+        TaskDto taskDto;
 
-		// find member
-		List<TaskMemberEntity> taskMembers = taskEntity.getMembers();
-		TaskMemberEntity memberFound = taskMembers.stream()
-				.filter(memberEntity -> memberEntity.getMemberCode().equals(memberCode)).findAny().orElse(null);
-		if (!(memberFound instanceof TaskMemberEntity)) {
-			throw new BusinessException("Task member not found.");
-		}
+        // verify task exists
+        TaskEntity taskEntity = taskService.getById(taskId);
+        if (taskEntity == null) {
+            throw new BusinessException("No se ha encontrado la tarea");
+        }
 
-		try {
+        // find member
+        List<TaskMemberEntity> taskMembers = taskEntity.getMembers();
+        TaskMemberEntity memberFound = taskMembers.stream()
+                .filter(memberEntity -> memberEntity.getMemberCode().equals(memberCode)).findAny().orElse(null);
+        if (memberFound == null) {
+            throw new BusinessException("No se ha encontrado el miembro");
+        }
 
-			taskMemberService.removeMemberById(memberFound.getId());
-			taskDto = this.getTaskById(taskId);
+        try {
 
-		} catch (Exception e) {
-			throw new BusinessException("The task could not be updated.");
-		}
+            taskMemberService.removeMemberById(memberFound.getId());
+            taskDto = this.getTaskById(taskId);
 
-		return taskDto;
-	}
-
-	public void addMemberToTask(TaskEntity taskEntity, Long memberCode) throws BusinessException {
-
-		// find member
-		List<TaskMemberEntity> taskMembers = taskEntity.getMembers();
-		TaskMemberEntity memberFound = taskMembers.stream()
-				.filter(memberEntity -> memberEntity.getMemberCode().equals(memberCode)).findAny().orElse(null);
-		if (memberFound instanceof TaskMemberEntity) {
-			throw new BusinessException("The member has already registered in the task.");
-		}
-
-		try {
-
-			TaskMemberEntity taskMemberEntity = new TaskMemberEntity();
-			taskMemberEntity.setMemberCode(memberCode);
-			taskMemberEntity.setCreatedAt(new Date());
-			taskMemberEntity.setTask(taskEntity);
-
-			taskMemberService.addMemberToTask(taskMemberEntity);
-
-		} catch (Exception e) {
-			throw new BusinessException("The task could not be updated.");
-		}
-
-	}
-
-	public TaskDto entityParseDto(TaskEntity taskEntity) {
-
-		TaskDto taskDto = null;
-
-		if (taskEntity instanceof TaskEntity) {
-			taskDto = new TaskDto();
-
-			taskDto.setId(taskEntity.getId());
-			taskDto.setName(taskEntity.getName());
-			taskDto.setDescription(taskEntity.getDescription());
-			taskDto.setCreatedAt(taskEntity.getCreatedAt());
-			taskDto.setDeadline(taskEntity.getDeadline());
-			taskDto.setClosingDate(taskEntity.getClosingDate());
-			taskDto.setReason(taskEntity.getReason());
-
-			// set state
-			TaskStateEntity taskStateEntity = taskEntity.getTaskState();
-			if (taskStateEntity.getName() == null) {
-				taskDto.setTaskState(taskStateBusiness.getById(taskStateEntity.getId()));
-			} else {
-				taskDto.setTaskState(new TaskStateDto(taskStateEntity.getId(), taskStateEntity.getName()));
-			}
-
-			// set members
-			for (TaskMemberEntity taskMemberEntity : taskEntity.getMembers()) {
-				TaskMemberDto member = new TaskMemberDto();
-				member.setId(taskMemberEntity.getId());
-				member.setMemberCode(taskMemberEntity.getMemberCode());
-				member.setCreatedAt(taskMemberEntity.getCreatedAt());
-				taskDto.getMembers().add(member);
-			}
-
-			// set categories
-			for (TaskCategoryEntity categoryEntity : taskEntity.getCategories()) {
-				TaskCategoryDto categoryDto = new TaskCategoryDto();
-				categoryDto.setId(categoryEntity.getId());
-				categoryDto.setName(categoryEntity.getName());
-				taskDto.getCategories().add(categoryDto);
-			}
-
-			// set metadata
-			for (TaskMetadataEntity metadata : taskEntity.getMetadata()) {
-				TaskMetadataDto metadataDto = new TaskMetadataDto();
-				metadataDto.setId(metadata.getId());
-				metadataDto.setKey(metadata.getKey());
-
-				for (MetadataPropertyEntity propertyEntity : metadata.getProperties()) {
-
-					metadataDto.getProperties().add(new TaskMetadataPropertyDto(propertyEntity.getId(),
-							propertyEntity.getKey(), propertyEntity.getValue()));
-				}
-
-				taskDto.getMetadata().add(metadataDto);
-			}
-
-			// set steps
-			for (TaskStepEntity stepEntity : taskEntity.getSteps()) {
-				TaskStepDto stepDto = new TaskStepDto();
-				stepDto.setCode(stepEntity.getCode());
-				stepDto.setDescription(stepEntity.getDescription());
-				stepDto.setId(stepEntity.getId());
-				stepDto.setStatus(stepEntity.getStatus());
-				stepDto.setTypeStep(
-						new TaskTypeStepDto(stepEntity.getTypeStep().getId(), stepEntity.getTypeStep().getName()));
-				taskDto.getSteps().add(stepDto);
-			}
-
-		}
-
-		return taskDto;
-	}
+        } catch (Exception e) {
+            String messageError = String.format("Error quitando el usuario %d de la tarea %d: %s", memberCode, taskId,
+                    e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido quitar el usuario de la tarea.");
+        }
+
+        return taskDto;
+    }
+
+    public void addMemberToTask(TaskEntity taskEntity, Long memberCode) throws BusinessException {
+
+        // find member
+        List<TaskMemberEntity> taskMembers = taskEntity.getMembers();
+        TaskMemberEntity memberFound = taskMembers.stream()
+                .filter(memberEntity -> memberEntity.getMemberCode().equals(memberCode)).findAny().orElse(null);
+        if (memberFound != null) {
+            throw new BusinessException("El miembro ya se encuentra registrado en la tarea");
+        }
+
+        try {
+
+            TaskMemberEntity taskMemberEntity = new TaskMemberEntity();
+            taskMemberEntity.setMemberCode(memberCode);
+            taskMemberEntity.setCreatedAt(new Date());
+            taskMemberEntity.setTask(taskEntity);
+
+            taskMemberService.addMemberToTask(taskMemberEntity);
+
+        } catch (Exception e) {
+            String messageError = String.format("Error agregando el usuario %d de la tarea %d: %s", memberCode,
+                    taskEntity.getId(), e.getMessage());
+            SCMTracing.sendError(messageError);
+            log.error(messageError);
+            throw new BusinessException("No se ha podido agregar el usuario a la tarea.");
+        }
+
+    }
+
+    public TaskDto entityParseDto(TaskEntity taskEntity) {
+
+        TaskDto taskDto = null;
+
+        if (taskEntity != null) {
+            taskDto = new TaskDto();
+
+            taskDto.setId(taskEntity.getId());
+            taskDto.setName(taskEntity.getName());
+            taskDto.setDescription(taskEntity.getDescription());
+            taskDto.setCreatedAt(taskEntity.getCreatedAt());
+            taskDto.setDeadline(taskEntity.getDeadline());
+            taskDto.setClosingDate(taskEntity.getClosingDate());
+            taskDto.setReason(taskEntity.getReason());
+
+            // set state
+            TaskStateEntity taskStateEntity = taskEntity.getTaskState();
+            if (taskStateEntity.getName() == null) {
+                taskDto.setTaskState(taskStateBusiness.getById(taskStateEntity.getId()));
+            } else {
+                taskDto.setTaskState(new TaskStateDto(taskStateEntity.getId(), taskStateEntity.getName()));
+            }
+
+            // set members
+            for (TaskMemberEntity taskMemberEntity : taskEntity.getMembers()) {
+                TaskMemberDto member = new TaskMemberDto();
+                member.setId(taskMemberEntity.getId());
+                member.setMemberCode(taskMemberEntity.getMemberCode());
+                member.setCreatedAt(taskMemberEntity.getCreatedAt());
+                taskDto.getMembers().add(member);
+            }
+
+            // set categories
+            for (TaskCategoryEntity categoryEntity : taskEntity.getCategories()) {
+                TaskCategoryDto categoryDto = new TaskCategoryDto();
+                categoryDto.setId(categoryEntity.getId());
+                categoryDto.setName(categoryEntity.getName());
+                taskDto.getCategories().add(categoryDto);
+            }
+
+            // set metadata
+            for (TaskMetadataEntity metadata : taskEntity.getMetadata()) {
+                TaskMetadataDto metadataDto = new TaskMetadataDto();
+                metadataDto.setId(metadata.getId());
+                metadataDto.setKey(metadata.getKey());
+
+                for (MetadataPropertyEntity propertyEntity : metadata.getProperties()) {
+
+                    metadataDto.getProperties().add(new TaskMetadataPropertyDto(propertyEntity.getId(),
+                            propertyEntity.getKey(), propertyEntity.getValue()));
+                }
+
+                taskDto.getMetadata().add(metadataDto);
+            }
+
+            // set steps
+            for (TaskStepEntity stepEntity : taskEntity.getSteps()) {
+                TaskStepDto stepDto = new TaskStepDto();
+                stepDto.setCode(stepEntity.getCode());
+                stepDto.setDescription(stepEntity.getDescription());
+                stepDto.setId(stepEntity.getId());
+                stepDto.setStatus(stepEntity.getStatus());
+                stepDto.setTypeStep(
+                        new TaskTypeStepDto(stepEntity.getTypeStep().getId(), stepEntity.getTypeStep().getName()));
+                taskDto.getSteps().add(stepDto);
+            }
+
+        }
+
+        return taskDto;
+    }
 
 }

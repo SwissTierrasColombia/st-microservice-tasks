@@ -10,10 +10,10 @@ import com.ai.st.microservice.tasks.dto.UserDto;
 @FeignClient(name = "st-microservice-administration")
 public interface UserFeignClient {
 
-	@GetMapping("/api/administration/users/{id}")
-	public UserDto findById(@PathVariable Long id);
+    @GetMapping("/api/administration/users/{id}")
+    public UserDto findById(@PathVariable Long id);
 
-	@GetMapping("/api/administration/users/token")
-	public UserDto findByToken(@RequestParam(name = "token") String token);
+    @GetMapping("/api/administration/users/token")
+    public UserDto findByToken(@RequestParam(name = "token") String token);
 
 }

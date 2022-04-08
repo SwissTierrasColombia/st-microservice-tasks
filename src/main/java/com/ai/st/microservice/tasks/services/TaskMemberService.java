@@ -11,25 +11,25 @@ import com.ai.st.microservice.tasks.repositories.TaskMemberRepository;
 @Service
 public class TaskMemberService implements ITaskMemberService {
 
-	@Autowired
-	private TaskMemberRepository taskMemberRepository;
+    @Autowired
+    private TaskMemberRepository taskMemberRepository;
 
-	@Override
-	@Transactional
-	public void removeMemberById(Long memberId) {
-		taskMemberRepository.deleteById(memberId);
-	}
+    @Override
+    @Transactional
+    public void removeMemberById(Long memberId) {
+        taskMemberRepository.deleteById(memberId);
+    }
 
-	@Override
-	@Transactional
-	public void removeMemberByCode(Long memberCode) {
-		taskMemberRepository.deleteByMemberCode(memberCode);
-	}
+    @Override
+    @Transactional
+    public void removeMemberByCode(Long memberCode) {
+        taskMemberRepository.deleteByMemberCode(memberCode);
+    }
 
-	@Override
-	@Transactional
-	public TaskMemberEntity addMemberToTask(TaskMemberEntity memberEntity) {
-		return taskMemberRepository.save(memberEntity);
-	}
+    @Override
+    @Transactional
+    public TaskMemberEntity addMemberToTask(TaskMemberEntity memberEntity) {
+        return taskMemberRepository.save(memberEntity);
+    }
 
 }
