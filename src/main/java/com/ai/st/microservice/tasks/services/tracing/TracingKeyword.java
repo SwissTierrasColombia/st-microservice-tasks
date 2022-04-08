@@ -1,8 +1,7 @@
 package com.ai.st.microservice.tasks.services.tracing;
 
 public enum TracingKeyword {
-    BODY_REQUEST("bodyRequest"), AUTHORIZATION_HEADER("authorizationHeader"), USER_ID("userId"), USER_NAME("username"),
-    USER_EMAIL("userEmail"), MANAGER_ID("managerId"), MANAGER_NAME("managerName");
+    BODY_REQUEST("bodyRequest");
 
     private final String value;
 
