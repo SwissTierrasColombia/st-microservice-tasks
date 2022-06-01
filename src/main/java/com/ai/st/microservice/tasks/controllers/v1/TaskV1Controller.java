@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import com.ai.st.microservice.common.dto.general.BasicResponseDto;
+import com.ai.st.microservice.tasks.services.tracing.SCMTracing;
+import com.ai.st.microservice.tasks.services.tracing.TracingKeyword;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -21,10 +23,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.ai.st.microservice.tasks.business.TaskBusiness;
-import com.ai.st.microservice.tasks.dto.BasicResponseDto;
 import com.ai.st.microservice.tasks.dto.CancelTaskDto;
 import com.ai.st.microservice.tasks.dto.CreateTaskDto;
-import com.ai.st.microservice.tasks.dto.ErrorDto;
 import com.ai.st.microservice.tasks.dto.TaskDto;
 import com.ai.st.microservice.tasks.exceptions.BusinessException;
 import com.ai.st.microservice.tasks.exceptions.InputValidationException;
@@ -34,223 +34,255 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
-@Api(value = "Manage Tasks", description = "Manage Tasks", tags = { "Tasks" })
+@Api(value = "Manage Tasks", tags = { "Tasks" })
 @RestController
 @RequestMapping("api/tasks/v1/tasks")
 public class TaskV1Controller {
 
-	private final Logger log = LoggerFactory.getLogger(this.getClass());
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
-	@Autowired
-	private TaskBusiness taskBusiness;
+    private final TaskBusiness taskBusiness;
 
-	@GetMapping("")
-	@ApiOperation(value = "Get all tasks")
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "Get tasks", response = TaskDto.class),
-			@ApiResponse(code = 500, message = "Error Server") })
-	public ResponseEntity<List<TaskDto>> getAllTasks(@RequestParam(required = false, name = "member") Long memberCode,
-			@RequestParam(required = false, name = "states") List<Long> taskStates,
-			@RequestParam(required = false, name = "categories") List<Long> categories) {
+    public TaskV1Controller(TaskBusiness taskBusiness) {
+        this.taskBusiness = taskBusiness;
+    }
 
-		HttpStatus httpStatus = null;
-		List<TaskDto> listTasks = new ArrayList<TaskDto>();
+    @GetMapping("")
+    @ApiOperation(value = "Get all tasks")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Get tasks", response = TaskDto.class),
+            @ApiResponse(code = 500, message = "Error Server") })
+    public ResponseEntity<List<TaskDto>> getAllTasks(@RequestParam(required = false, name = "member") Long memberCode,
+            @RequestParam(required = false, name = "states") List<Long> taskStates,
+            @RequestParam(required = false, name = "categories") List<Long> categories) {
 
-		try {
-			listTasks = taskBusiness.getTasksByFilters(memberCode, taskStates, categories);
+        HttpStatus httpStatus;
+        List<TaskDto> listTasks = new ArrayList<>();
 
-			httpStatus = HttpStatus.OK;
-		} catch (Exception e) {
-			log.error("Error TaskController@getAllTasks ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+        try {
 
-		return new ResponseEntity<>(listTasks, httpStatus);
-	}
+            SCMTracing.setTransactionName("getAllTasks");
 
-	@PostMapping("")
-	@ApiOperation(value = "Create task")
-	@ApiResponses(value = { @ApiResponse(code = 201, message = "Task created", response = TaskDto.class),
-			@ApiResponse(code = 500, message = "Error Server") })
-	public ResponseEntity<Object> createTask(@RequestBody(required = true) CreateTaskDto taskRequest) {
+            listTasks = taskBusiness.getTasksByFilters(memberCode, taskStates, categories);
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+            httpStatus = HttpStatus.OK;
+        } catch (Exception e) {
+            log.error("Error TaskController@getAllTasks#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
+        }
 
-		try {
+        return new ResponseEntity<>(listTasks, httpStatus);
+    }
 
-			// validation name
-			String taskName = taskRequest.getName();
-			if (taskName.isEmpty() || taskName == null) {
-				throw new InputValidationException("El nombre de la tarea es requerido");
-			}
+    @PostMapping("")
+    @ApiOperation(value = "Create task")
+    @ApiResponses(value = { @ApiResponse(code = 201, message = "Task created", response = TaskDto.class),
+            @ApiResponse(code = 500, message = "Error Server") })
+    public ResponseEntity<?> createTask(@RequestBody CreateTaskDto taskRequest) {
 
-			// validation deadline
-			Date taskDeadline = null;
-			String taskDeadlineString = taskRequest.getDeadline();
-			if (taskDeadlineString != null && !taskDeadlineString.isEmpty()) {
-				try {
-					SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-					taskDeadline = sdf.parse(taskDeadlineString);
-				} catch (Exception e) {
-					throw new InputValidationException("La fecha límite es inválida.");
-				}
-			}
+        HttpStatus httpStatus;
+        Object responseDto;
 
-			// validation users
-			List<Long> taskUsers = taskRequest.getUsers();
-			if (taskUsers.size() == 0) {
-				throw new InputValidationException("La tarea debe tener al menos un usuario.");
-			}
+        try {
 
-			// validation categories
-			List<Long> taskCategories = taskRequest.getCategories();
-			if (taskCategories.size() == 0) {
-				throw new InputValidationException("La tarea debe tener al menos una categoria.");
-			}
+            SCMTracing.setTransactionName("createTask");
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, taskRequest.toString());
 
-			responseDto = taskBusiness.createTask(taskName, taskRequest.getDescription(), taskUsers, taskDeadline,
-					taskCategories, taskRequest.getMetadata(), taskRequest.getSteps());
-			httpStatus = HttpStatus.CREATED;
+            // validation name
+            String taskName = taskRequest.getName();
+            if (taskName == null || taskName.isEmpty()) {
+                throw new InputValidationException("El nombre de la tarea es requerido");
+            }
 
-		} catch (InputValidationException e) {
-			log.error("Error TaskController@createTask#Validation ---> " + e.getMessage());
-			httpStatus = HttpStatus.BAD_REQUEST;
-			responseDto = new ErrorDto(e.getMessage(), 1);
-		} catch (BusinessException e) {
-			log.error("Error TaskController@createTask#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new ErrorDto(e.getMessage(), 2);
-		} catch (Exception e) {
-			log.error("Error TaskController@createTask#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new ErrorDto(e.getMessage(), 3);
-		}
+            // validation deadline
+            Date taskDeadline = null;
+            String taskDeadlineString = taskRequest.getDeadline();
+            if (taskDeadlineString != null && !taskDeadlineString.isEmpty()) {
+                try {
+                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    taskDeadline = sdf.parse(taskDeadlineString);
+                } catch (Exception e) {
+                    throw new InputValidationException("La fecha límite es inválida.");
+                }
+            }
 
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+            // validation users
+            List<Long> taskUsers = taskRequest.getUsers();
+            if (taskUsers.size() == 0) {
+                throw new InputValidationException("La tarea debe tener al menos un usuario.");
+            }
 
-	@GetMapping("/{id}")
-	@ApiOperation(value = "Get task by id")
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "Get tasks", response = TaskDto.class),
-			@ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
-	public ResponseEntity<TaskDto> getTaskById(@PathVariable(required = true, name = "id") Long id) {
+            // validation categories
+            List<Long> taskCategories = taskRequest.getCategories();
+            if (taskCategories.size() == 0) {
+                throw new InputValidationException("La tarea debe tener al menos una categoría.");
+            }
 
-		HttpStatus httpStatus = null;
-		TaskDto taskDto = null;
+            responseDto = taskBusiness.createTask(taskName, taskRequest.getDescription(), taskUsers, taskDeadline,
+                    taskCategories, taskRequest.getMetadata(), taskRequest.getSteps());
+            httpStatus = HttpStatus.CREATED;
 
-		try {
-			taskDto = taskBusiness.getTaskById(id);
-			httpStatus = (taskDto instanceof TaskDto) ? HttpStatus.OK : HttpStatus.NOT_FOUND;
-		} catch (Exception e) {
-			log.error("Error TaskController@getTaskById ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+        } catch (InputValidationException e) {
+            log.error("Error TaskController@createTask#Validation ---> " + e.getMessage());
+            httpStatus = HttpStatus.BAD_REQUEST;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
+        } catch (BusinessException e) {
+            log.error("Error TaskController@createTask#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error TaskController@createTask#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
+        }
 
-		return new ResponseEntity<>(taskDto, httpStatus);
-	}
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
-	@PutMapping("/{id}/close")
-	@ApiOperation(value = "Close task")
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
-			@ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
-	public ResponseEntity<TaskDto> closeTask(@PathVariable(required = true) Long id) {
+    @GetMapping("/{id}")
+    @ApiOperation(value = "Get task by id")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Get tasks", response = TaskDto.class),
+            @ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
+    public ResponseEntity<TaskDto> getTaskById(@PathVariable(name = "id") Long id) {
 
-		HttpStatus httpStatus = null;
-		TaskDto taskDtoResponse = null;
+        HttpStatus httpStatus;
+        TaskDto taskDto = null;
 
-		try {
+        try {
 
-			taskDtoResponse = taskBusiness.closeTask(id);
-			httpStatus = HttpStatus.OK;
+            SCMTracing.setTransactionName("getTaskById");
 
-		} catch (BusinessException e) {
-			log.error("Error TaskController@closeTask1 ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			log.error("Error TaskController@closeTask2 ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+            taskDto = taskBusiness.getTaskById(id);
+            httpStatus = (taskDto != null) ? HttpStatus.OK : HttpStatus.NOT_FOUND;
+        } catch (Exception e) {
+            log.error("Error TaskController@getTaskById#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
+        }
 
-		return new ResponseEntity<>(taskDtoResponse, httpStatus);
-	}
+        return new ResponseEntity<>(taskDto, httpStatus);
+    }
 
-	@PutMapping("/{id}/start")
-	@ApiOperation(value = "Start task")
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
-			@ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
-	public ResponseEntity<TaskDto> startTask(@PathVariable(required = true) Long id) {
+    @PutMapping("/{id}/close")
+    @ApiOperation(value = "Close task")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
+            @ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
+    public ResponseEntity<TaskDto> closeTask(@PathVariable Long id) {
 
-		HttpStatus httpStatus = null;
-		TaskDto taskDtoResponse = null;
+        HttpStatus httpStatus;
+        TaskDto taskDtoResponse = null;
 
-		try {
+        try {
 
-			taskDtoResponse = taskBusiness.startTask(id);
-			httpStatus = HttpStatus.OK;
+            SCMTracing.setTransactionName("closeTask");
 
-		} catch (BusinessException e) {
-			log.error("Error TaskController@closeTask#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			log.error("Error TaskController@closeTask#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+            taskDtoResponse = taskBusiness.closeTask(id);
+            httpStatus = HttpStatus.OK;
 
-		return new ResponseEntity<>(taskDtoResponse, httpStatus);
-	}
+        } catch (BusinessException e) {
+            log.error("Error TaskController@closeTask#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error TaskController@closeTask#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
+        }
 
-	@PutMapping("/{id}/cancel")
-	@ApiOperation(value = "Cancel task")
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
-			@ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
-	public ResponseEntity<TaskDto> cancelTask(@PathVariable(required = true) Long id,
-			@RequestBody(required = true) CancelTaskDto cancelTaskRequest) {
+        return new ResponseEntity<>(taskDtoResponse, httpStatus);
+    }
 
-		HttpStatus httpStatus = null;
-		TaskDto taskDtoResponse = null;
+    @PutMapping("/{id}/start")
+    @ApiOperation(value = "Start task")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
+            @ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
+    public ResponseEntity<TaskDto> startTask(@PathVariable Long id) {
 
-		try {
+        HttpStatus httpStatus;
+        TaskDto taskDtoResponse = null;
 
-			taskDtoResponse = taskBusiness.cancelTask(id, cancelTaskRequest.getReason());
-			httpStatus = HttpStatus.OK;
+        try {
 
-		} catch (BusinessException e) {
-			log.error("Error TaskController@closeTask#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-		} catch (Exception e) {
-			log.error("Error TaskController@closeTask#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-		}
+            SCMTracing.setTransactionName("startTask");
 
-		return new ResponseEntity<>(taskDtoResponse, httpStatus);
-	}
+            taskDtoResponse = taskBusiness.startTask(id);
+            httpStatus = HttpStatus.OK;
 
-	@DeleteMapping("/{taskId}/members/{memberId}/")
-	@ApiOperation(value = "Remove member from task")
-	@ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
-			@ApiResponse(code = 404, message = "Member removed"), @ApiResponse(code = 500, message = "Error Server") })
-	public ResponseEntity<?> removeMemberFromTask(@PathVariable(required = true) Long taskId,
-			@PathVariable(required = true) Long memberId) {
+        } catch (BusinessException e) {
+            log.error("Error TaskController@startTask#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error TaskController@startTask#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
+        }
 
-		HttpStatus httpStatus = null;
-		Object responseDto = null;
+        return new ResponseEntity<>(taskDtoResponse, httpStatus);
+    }
 
-		try {
+    @PutMapping("/{id}/cancel")
+    @ApiOperation(value = "Cancel task")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
+            @ApiResponse(code = 404, message = "Task not found"), @ApiResponse(code = 500, message = "Error Server") })
+    public ResponseEntity<TaskDto> cancelTask(@PathVariable Long id, @RequestBody CancelTaskDto cancelTaskRequest) {
 
-			responseDto = taskBusiness.removeUserFromTask(taskId, memberId);
-			httpStatus = HttpStatus.OK;
+        HttpStatus httpStatus;
+        TaskDto taskDtoResponse = null;
 
-		} catch (BusinessException e) {
-			log.error("Error TaskController@removeMemberFromTask#Business ---> " + e.getMessage());
-			httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
-			responseDto = new BasicResponseDto(e.getMessage(), 2);
-		} catch (Exception e) {
-			log.error("Error TaskController@removeMemberFromTask#General ---> " + e.getMessage());
-			httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
-			responseDto = new BasicResponseDto(e.getMessage(), 1);
-		}
+        try {
 
-		return new ResponseEntity<>(responseDto, httpStatus);
-	}
+            SCMTracing.setTransactionName("cancelTask");
+            SCMTracing.addCustomParameter(TracingKeyword.BODY_REQUEST, cancelTaskRequest.toString());
+
+            taskDtoResponse = taskBusiness.cancelTask(id, cancelTaskRequest.getReason());
+            httpStatus = HttpStatus.OK;
+
+        } catch (BusinessException e) {
+            log.error("Error TaskController@cancelTask#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            SCMTracing.sendError(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error TaskController@cancelTask#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            SCMTracing.sendError(e.getMessage());
+        }
+
+        return new ResponseEntity<>(taskDtoResponse, httpStatus);
+    }
+
+    @DeleteMapping("/{taskId}/members/{memberId}/")
+    @ApiOperation(value = "Remove member from task")
+    @ApiResponses(value = { @ApiResponse(code = 200, message = "Task updated", response = TaskDto.class),
+            @ApiResponse(code = 404, message = "Member removed"), @ApiResponse(code = 500, message = "Error Server") })
+    public ResponseEntity<?> removeMemberFromTask(@PathVariable Long taskId, @PathVariable Long memberId) {
+
+        HttpStatus httpStatus;
+        Object responseDto;
+
+        try {
+
+            SCMTracing.setTransactionName("removeMemberFromTask");
+
+            responseDto = taskBusiness.removeUserFromTask(taskId, memberId);
+            httpStatus = HttpStatus.OK;
+
+        } catch (BusinessException e) {
+            log.error("Error TaskController@removeMemberFromTask#Business ---> " + e.getMessage());
+            httpStatus = HttpStatus.UNPROCESSABLE_ENTITY;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
+        } catch (Exception e) {
+            log.error("Error TaskController@removeMemberFromTask#General ---> " + e.getMessage());
+            httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+            responseDto = new BasicResponseDto(e.getMessage());
+            SCMTracing.sendError(e.getMessage());
+        }
+
+        return new ResponseEntity<>(responseDto, httpStatus);
+    }
 
 }
