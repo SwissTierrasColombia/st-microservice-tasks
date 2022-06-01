@@ -10,8 +10,8 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @SpringBootApplication
 public class StMicroserviceTasksApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(StMicroserviceTasksApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(StMicroserviceTasksApplication.class, args);
+    }
 
 }
